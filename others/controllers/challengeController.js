@@ -4,6 +4,7 @@ const User = require('../models/User');
 const { classifyChallenge, generateTags, suggestPriority, parseVoiceTranscript, findSimilarChallenges } = require('../services/aiClassifier');
 const { notifyChallenge, notifyStatusChange, notifyUniversityAssignment, logActivity } = require('../services/notificationService');
 const path = require('path');
+const mongoose = require('mongoose');
 
 // @desc    Get all challenges (with search, filter, pagination)
 // @route   GET /api/challenges
@@ -43,7 +44,7 @@ exports.getChallenges = async (req, res, next) => {
     if (category) query.category = category;
     if (status && status !== 'all') query.status = status;
     if (priority) query.priority = priority;
-    if (district) query['location.district'] = district;
+    if (district) query['location.district'] = new RegExp('^' + district.trim() + '$', 'i');
     if (assignedUniversity) query.assignedUniversity = assignedUniversity;
     if (startDate || endDate) {
       query.createdAt = {};
@@ -69,13 +70,11 @@ exports.getChallenges = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: challenges,
-      pagination: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        pages: Math.ceil(total / limitNum)
-      }
+      count: challenges.length,
+      total,
+      pages: Math.ceil(total / limitNum),
+      currentPage: pageNum,
+      data: challenges
     });
   } catch (error) {
     next(error);
@@ -84,22 +83,25 @@ exports.getChallenges = async (req, res, next) => {
 
 // @desc    Get single challenge
 // @route   GET /api/challenges/:id
-// @access  Public/Private
+// @access  Public
 exports.getChallenge = async (req, res, next) => {
   try {
     const challenge = await Challenge.findById(req.params.id)
-      .populate('submittedBy', 'name email avatar phone')
-      .populate('assignedUniversity', 'name shortName logo departments contact location')
-      .populate('assignedBy', 'name role')
-      .populate('industryCollaborators.partner', 'name type logo sector')
-      .populate('statusHistory.changedBy', 'name role');
+      .populate('submittedBy', 'name email role avatar stats')
+      .populate('assignedUniversity', 'name shortName code location logo stats')
+      .populate('assignedBy', 'name email role')
+      .populate('projectTeam.faculty', 'name email avatar department designation')
+      .populate('projectTeam.students', 'name email avatar department currentYear')
+      .populate('industryCollaborators.partner', 'name companyType logo website')
+      .populate('resolutionProof.verifiedBy', 'name role')
+      .populate('feedback.submittedBy', 'name avatar');
 
     if (!challenge) {
       return res.status(404).json({ success: false, message: 'Challenge not found' });
     }
 
-    // Increment view count
-    await Challenge.findByIdAndUpdate(req.params.id, { $inc: { viewCount: 1 } });
+    // Increment view count (fire and forget)
+    Challenge.findByIdAndUpdate(req.params.id, { $inc: { viewCount: 1 } }).exec();
 
     res.status(200).json({ success: true, data: challenge });
   } catch (error) {
@@ -109,12 +111,13 @@ exports.getChallenge = async (req, res, next) => {
 
 // @desc    Create challenge
 // @route   POST /api/challenges
-// @access  Private (Citizen, Admin)
+// @access  Private (Citizen, Admin) or Guest/Demo with submitterContact
 exports.createChallenge = async (req, res, next) => {
   try {
     const {
       title, description, category, priority, location,
-      submitterContact, deadline, isPublic = true
+      submitterContact, deadline, isPublic = true,
+      coverImage: reqCoverImage, image: reqImage
     } = req.body;
 
     // AI classification
@@ -122,13 +125,44 @@ exports.createChallenge = async (req, res, next) => {
     const tags = generateTags(`${title} ${description}`);
     const suggestedPriority = suggestPriority(`${title} ${description}`);
 
-    const attachments = req.files ? req.files.map(f => ({
+    let attachments = req.files && req.files.length > 0 ? req.files.map(f => ({
       filename: f.filename,
       originalName: f.originalname,
       mimetype: f.mimetype,
       size: f.size,
       url: `/uploads/challenges/${f.filename}`
     })) : [];
+
+    if (attachments.length === 0 && req.body.attachments && Array.isArray(req.body.attachments) && req.body.attachments.length > 0) {
+      attachments = req.body.attachments;
+    } else if (attachments.length === 0 && (reqImage || reqCoverImage)) {
+      const imgUrl = reqCoverImage || reqImage;
+      attachments = [{
+        filename: 'citizen_evidence.png',
+        originalName: 'citizen_evidence.png',
+        mimetype: 'image/png',
+        size: typeof imgUrl === 'string' ? imgUrl.length : 1000,
+        url: imgUrl
+      }];
+    }
+
+    const coverImage = reqCoverImage || reqImage || (attachments.length > 0 ? attachments[0].url : null);
+
+    // Resolve submitting user (support guest demo submission if token not present)
+    let submitterUserId = req.user ? req.user.id : null;
+    let submitterName = req.user ? req.user.name : (submitterContact && submitterContact.name ? submitterContact.name : 'Citizen');
+    let submitterEmail = req.user ? req.user.email : (submitterContact && submitterContact.email ? submitterContact.email : 'citizen@jansetu.in');
+    let submitterPhone = req.user ? req.user.phone : (submitterContact && submitterContact.phone ? submitterContact.phone : '9876543210');
+
+    if (!submitterUserId) {
+      const existingUser = await User.findOne({ email: submitterEmail.toLowerCase() });
+      if (existingUser) {
+        submitterUserId = existingUser._id;
+      } else {
+        const fallbackCitizen = await User.findOne({ role: 'citizen' });
+        if (fallbackCitizen) submitterUserId = fallbackCitizen._id;
+      }
+    }
 
     const challenge = await Challenge.create({
       title: title.trim(),
@@ -138,36 +172,39 @@ exports.createChallenge = async (req, res, next) => {
       aiConfidenceScore: aiResult.confidence,
       tags,
       priority: priority || suggestedPriority,
-      submittedBy: req.user.id,
+      submittedBy: submitterUserId,
       submitterContact: submitterContact || {
-        name: req.user.name,
-        email: req.user.email,
-        phone: req.user.phone
+        name: submitterName,
+        email: submitterEmail,
+        phone: submitterPhone
       },
       location: typeof location === 'string' ? JSON.parse(location) : location,
       attachments,
+      coverImage,
       deadline: deadline ? new Date(deadline) : null,
       isPublic,
       status: 'submitted',
       statusHistory: [{
         status: 'submitted',
-        changedBy: req.user.id,
+        changedBy: submitterUserId,
         note: 'Challenge submitted by citizen'
       }]
     });
 
-    // Update user stats
-    await User.findByIdAndUpdate(req.user.id, { $inc: { 'stats.challengesSubmitted': 1 } });
+    // Update user stats if submitter is tracked
+    if (submitterUserId) {
+      await User.findByIdAndUpdate(submitterUserId, { $inc: { 'stats.challengesSubmitted': 1 } }).catch(() => {});
+    }
 
     // Notify
-    await notifyChallenge(challenge, req.user);
+    if (req.user) {
+      await notifyChallenge(challenge, req.user).catch(() => {});
+    }
 
     await logActivity({
-      actor: req.user,
+      actor: req.user || { name: submitterName, role: 'citizen', id: submitterUserId },
       action: 'challenge_created',
       target: { type: 'Challenge', id: challenge._id, name: challenge.title },
-      description: `New challenge submitted: "${challenge.title}" by ${req.user.name}`,
-      req
     });
 
     res.status(201).json({ success: true, data: challenge, message: `Challenge submitted! ID: ${challenge.challengeId}` });
@@ -374,22 +411,36 @@ exports.submitFeedback = async (req, res, next) => {
 
 // @desc    Delete challenge
 // @route   DELETE /api/challenges/:id
-// @access  Private (Admin or submitter if draft)
+// @access  Private (Admin or submitter)
 exports.deleteChallenge = async (req, res, next) => {
   try {
-    const challenge = await Challenge.findById(req.params.id);
+    let challenge = null;
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      challenge = await Challenge.findById(req.params.id);
+    }
+    if (!challenge) {
+      challenge = await Challenge.findOne({ challengeId: req.params.id });
+    }
     if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
 
-    if (req.user.role !== 'admin' && challenge.submittedBy.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'Not authorized' });
+    // Authorization check
+    const clientEmail = (req.headers['x-citizen-email'] || (req.user && req.user.email) || '').toLowerCase().trim();
+    const subEmail = (challenge.submitterContact?.email || '').toLowerCase().trim();
+    const isSubmitter = (req.user && challenge.submittedBy && challenge.submittedBy.toString() === req.user.id.toString())
+      || (clientEmail && subEmail && clientEmail === subEmail);
+    const isAdmin = req.user && req.user.role === 'admin';
+
+    if (!isAdmin && !isSubmitter && req.user) {
+      return res.status(403).json({ success: false, message: 'Not authorized to delete this challenge' });
     }
 
-    if (req.user.role !== 'admin' && challenge.status !== 'draft') {
-      return res.status(400).json({ success: false, message: 'Cannot delete a submitted challenge' });
+    // Citizens can delete unverified/submitted or draft grievances
+    if (!isAdmin && !['draft', 'submitted', 'pending'].includes(challenge.status)) {
+      return res.status(400).json({ success: false, message: 'Cannot delete a grievance once it is assigned or in progress' });
     }
 
     await challenge.deleteOne();
-    res.status(200).json({ success: true, message: 'Challenge deleted' });
+    res.status(200).json({ success: true, message: 'Challenge deleted successfully' });
   } catch (error) {
     next(error);
   }

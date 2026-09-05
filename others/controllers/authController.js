@@ -11,6 +11,8 @@ const sendTokenResponse = (user, statusCode, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      phone: user.phone,
+      address: user.address,
       avatar: user.avatar,
       isVerified: user.isVerified,
       universityId: user.universityId,
@@ -24,7 +26,7 @@ const sendTokenResponse = (user, statusCode, res) => {
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role, phone, universityId, industryPartnerId, designation, department } = req.body;
+    const { name, email, password, role, phone, address, universityId, industryPartnerId, designation, department } = req.body;
 
     // Validate role
     const allowedRoles = ['citizen', 'university_rep', 'industry_rep'];
@@ -37,7 +39,7 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Email already registered' });
     }
 
-    const userData = { name, email, password, role: role || 'citizen', phone, designation, department };
+    const userData = { name, email, password, role: role || 'citizen', phone, address, designation, department };
     if (role === 'university_rep' && universityId) userData.universityId = universityId;
     if (role === 'industry_rep' && industryPartnerId) userData.industryPartnerId = industryPartnerId;
 

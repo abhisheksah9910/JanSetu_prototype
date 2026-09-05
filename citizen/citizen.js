@@ -268,7 +268,7 @@ async function loadDashSidebarWidgets() {
   if (supEl) {
     const supporters = [
       { name: 'Rahul Verma', supports: 142, av: 'R', color: '#1a56db' },
-      { name: 'Raza Sharma', supports: 128, av: 'R', color: '#7c3aed' },
+      { name: 'Aarav Sharma', supports: 128, av: 'A', color: '#7c3aed' },
       { name: 'Aman Singh', supports: 112, av: 'A', color: '#059669' },
       { name: 'Neha Patel', supports: 98, av: 'N', color: '#d97706' },
       { name: 'Karan Mehta', supports: 86, av: 'K', color: '#dc2626' }

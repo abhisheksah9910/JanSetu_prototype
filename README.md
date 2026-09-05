@@ -72,7 +72,7 @@ Open your browser and visit: **`http://localhost:5000`**
 | Role | Email | Password | Access / Dashboard |
 | :--- | :--- | :--- | :--- |
 | 🛡️ **Admin** | `admin@innovatesphere.in` | `admin123` | `/dashboard/admin.html` |
-| 👤 **Citizen** | `raza@gmail.com` | `citizen123` | `/dashboard/citizen.html` |
+| 👤 **Citizen** | `rajesh@gmail.com` | `citizen123` | `/dashboard/citizen.html` |
 | 🏛️ **University** | `rajesh@iitjharkhand.ac.in` | `univ123` | `/dashboard/university.html` |
 | 🏭 **Industry** | `tata@steel.com` | `industry123` | `/dashboard/industry.html` |
 

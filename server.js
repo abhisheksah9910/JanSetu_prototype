@@ -36,7 +36,7 @@ app.use(cors({
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 10000, // Generous limit for real-time dev/demo polling
   message: { success: false, message: 'Too many requests, please try again later.' }
 });
 
@@ -183,7 +183,7 @@ const server = app.listen(PORT, () => {
   console.log(`👤 Citizen Dashboard: http://localhost:${PORT}/dashboard/citizen`);
   console.log(`\n📌 Demo Credentials:`);
   console.log(`   Admin:      admin@innovatesphere.in / admin123`);
-  console.log(`   Citizen:    raza@gmail.com / citizen123`);
+  console.log(`   Citizen:    rajesh@gmail.com / citizen123`);
   console.log(`   University: rajesh@iitjharkhand.ac.in / univ123`);
   console.log(`   Industry:   tata@steel.com / industry123\n`);
 });

@@ -815,7 +815,7 @@
     // Static leaderboard (would be dynamic from DB in production)
     const supporters = [
       { name: 'Rahul Verma', city: 'Delhi', count: 142 },
-      { name: 'Raza Sharma', city: 'Mumbai', count: 128 },
+      { name: 'Aarav Sharma', city: 'Mumbai', count: 128 },
       { name: 'Arjun Singh', city: 'Lucknow', count: 112 },
       { name: 'Neha Patel', city: 'Ahmedabad', count: 98 },
       { name: 'Karan Mehta', city: 'Bengaluru', count: 88 },
