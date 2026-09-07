@@ -1627,9 +1627,351 @@
         padding: 20px;
         background: white;
       }
-      .modal-close, .modal-footer {
-        display: none !important;
+    /* ── Industry Opportunity & ROI Center Styles (SIH 2026 PS26043) ── */
+    .roi-container {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      padding-bottom: 40px;
+      width: 100%;
+    }
+
+    .roi-hero-banner {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #0369a1 100%);
+      color: white;
+      border-radius: var(--radius-xl);
+      padding: 28px 32px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .roi-hero-banner::after {
+      content: '';
+      position: absolute;
+      right: -20px;
+      bottom: -40px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
+      pointer-events: none;
+    }
+
+    .roi-hero-title {
+      font-size: 24px;
+      font-weight: 850;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .roi-hero-subtitle {
+      font-size: 14px;
+      color: #cbd5e1;
+      max-width: 760px;
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+
+    .roi-microcopy-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-full);
+      font-size: 12.5px;
+      font-weight: 650;
+      color: #e0f2fe;
+    }
+
+    .roi-section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .roi-section-title {
+      font-size: 18px;
+      font-weight: 850;
+      color: var(--gray-900);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .roi-section-sub {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-top: 3px;
+    }
+
+    /* Opportunity Score Cards Grid */
+    .opportunity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+
+    .opportunity-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: 20px 22px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .opportunity-card:hover {
+      border-color: var(--primary-300);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .opp-score-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      font-size: 16px;
+      font-weight: 850;
+      flex-shrink: 0;
+    }
+
+    .opp-score-badge.high {
+      background: #ecfdf5;
+      color: #047857;
+      border: 2px solid #a7f3d0;
+    }
+
+    .opp-score-badge.good {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 2px solid #bfdbfe;
+    }
+
+    .pillar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin: 14px 0 16px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+    }
+
+    .pillar-bar-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .pillar-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray-600);
+    }
+
+    /* Simulator & Calculator Layout */
+    .simulator-layout-grid {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    @media (max-width: 992px) {
+      .simulator-layout-grid {
+        grid-template-columns: 1fr;
       }
+    }
+
+    .sim-slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .sim-slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-800);
+    }
+
+    .sim-val-bubble {
+      font-size: 13px;
+      font-weight: 850;
+      color: var(--primary);
+      background: var(--primary-50);
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--primary-100);
+    }
+
+    .sim-slider-input {
+      width: 100%;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .sim-tier-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .sim-tier-btn {
+      padding: 8px 10px;
+      border: 1px solid var(--gray-200);
+      background: #f8fafc;
+      border-radius: var(--radius-md);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--gray-700);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+
+    .sim-tier-btn:hover {
+      background: white;
+      border-color: var(--primary-200);
+    }
+
+    .sim-tier-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Calculator Outputs Grid */
+    .roi-calc-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 540px) {
+      .roi-calc-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .roi-calc-stat-card {
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 98px;
+      transition: all 0.2s ease;
+    }
+
+    .roi-calc-stat-card:hover {
+      background: white;
+      border-color: var(--primary-200);
+      transform: translateY(-1px);
+    }
+
+    .roi-stat-num {
+      font-size: 22px;
+      font-weight: 850;
+      color: var(--gray-900);
+      line-height: 1.1;
+      margin: 6px 0 2px;
+    }
+
+    .roi-stat-lbl {
+      font-size: 11.5px;
+      font-weight: 650;
+      color: var(--gray-600);
+    }
+
+    /* What-If Comparative Section */
+    .what-if-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    @media (max-width: 768px) {
+      .what-if-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .what-if-card {
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-xl);
+      padding: 20px 24px;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .what-if-card.proposed {
+      border-color: #3b82f6;
+      background: linear-gradient(180deg, #eff6ff 0%, #ffffff 40%);
+    }
+
+    .what-if-delta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #047857;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    /* Recommended Opp Cards */
+    .rec-opp-item {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      transition: all 0.2s ease;
+    }
+
+    .rec-opp-item:hover {
+      border-color: var(--primary-300);
+      box-shadow: var(--shadow-sm);
     }
   </style>
 </head>
@@ -1667,6 +2009,10 @@
       <a class="sidebar-link" id="nav-explore" onclick="showSection('explore')">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <span class="sidebar-link-text">Explore Challenges</span>
+      </a>
+      <a class="sidebar-link" id="nav-roi" onclick="showSection('roi')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8l-8 8"/><path d="M16 16V8H8"/></svg>
+        <span class="sidebar-link-text">Opportunity & ROI</span>
       </a>
       <a class="sidebar-link" id="nav-collaborations" onclick="showSection('collaborations')">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
@@ -1827,6 +2173,13 @@
       <div id="section-project-workspace" class="dashboard-section" style="display:none">
         <div id="projectWorkspaceContainer" class="workspace-container">
           <!-- Populated dynamically by renderProjectWorkspace() -->
+        </div>
+      </div>
+
+      <!-- ── INDUSTRY OPPORTUNITY & ROI CENTER ── -->
+      <div id="section-roi" class="dashboard-section" style="display:none">
+        <div id="opportunityRoiContainer" class="roi-container">
+          <!-- Populated dynamically by renderOpportunityRoiCenter() -->
         </div>
       </div>
 
@@ -2711,6 +3064,31 @@
         <button onclick="triggerDocDownloadFromModal()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
           <span>⬇️</span> Download File
         </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Opportunity Detailed Analysis Breakdown -->
+<div class="modal-overlay" id="opportunityAnalysisModal">
+  <div class="modal-container" style="max-width:760px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="modal-title" id="oppModalTitle" style="font-size:18px;font-weight:800;color:var(--gray-900)">Opportunity Score Breakdown</div>
+          <span class="badge badge-resolved" id="oppModalScoreBadge" style="font-size:12px;font-weight:800">96/100</span>
+        </div>
+        <div id="oppModalSub" style="font-size:13px;color:var(--gray-500);margin-top:3px">CSR & Industry Strategic Fit Multi-Pillar Analysis</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('opportunityAnalysisModal')">✕</button>
+    </div>
+    <div class="modal-body" id="oppModalBody" style="padding:24px;max-height:75vh;overflow-y:auto">
+      <!-- Populated dynamically by openOpportunityAnalysisModal() -->
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:12px;color:var(--gray-500)">SIH 2026 Problem Statement 26043 • JanSetu AI Scoring</div>
+      <div style="display:flex;gap:10px" id="oppModalFooterActions">
+        <button onclick="closeModal('opportunityAnalysisModal')" class="btn btn-ghost">Close</button>
       </div>
     </div>
   </div>

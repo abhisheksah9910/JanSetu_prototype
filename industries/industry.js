@@ -73,6 +73,9 @@ function showSection(section) {
   if (section === 'challenge-details') {
     document.getElementById('nav-explore')?.classList.add('active');
   }
+  if (section === 'roi') {
+    document.getElementById('nav-roi')?.classList.add('active');
+  }
   if (section === 'project-workspace') {
     document.getElementById('nav-collaborations')?.classList.add('active');
   }
@@ -84,6 +87,7 @@ function showSection(section) {
     overview: ['Industry Overview', 'Overview'],
     explore: ['Explore Projects', 'Explore'],
     'challenge-details': ['Challenge Details', 'Explore / Details'],
+    roi: ['Industry Opportunity & ROI Center', 'Opportunity & ROI'],
     collaborations: ['My Collaborations', 'Collaborations'],
     'project-workspace': ['Project Collaboration Workspace', 'Collaborations / Workspace'],
     impact: ['Industry Impact & Analytics', 'Impact & Analytics'],
@@ -97,6 +101,7 @@ function showSection(section) {
   closeMobileSidebar();
 
   if (section === 'explore') loadExploreChallenges();
+  if (section === 'roi') loadOpportunityRoiCenter();
   if (section === 'challenge-details') {
     if (!currentSelectedChallenge && allProjects.length > 0) {
       currentSelectedChallenge = enrichChallengeData(allProjects[0]);
@@ -4143,6 +4148,803 @@ window.resetImpactFilters = resetImpactFilters;
 window.openImpactReportModal = openImpactReportModal;
 window.printImpactReport = printImpactReport;
 
+
+// ══════════════════════════════════════════════════════════════════════════════════
+// ── Industry Opportunity & ROI Center Logic (SIH 2026 Problem Statement 26043) ──
+// ══════════════════════════════════════════════════════════════════════════════════
+
+const STORAGE_ROI_SIMULATOR_KEY = 'janSetu_roi_simulator_state';
+
+const OPPORTUNITY_ROI_PROJECTS = [
+  {
+    id: 'PRJ-001',
+    challengeId: '7229B7B8',
+    title: 'Smart Irrigation System for Water-Stressed Farms',
+    domain: 'Agriculture',
+    district: 'Ranchi',
+    university: 'Xavier Institute of Social Service',
+    matchScore: 96,
+    pillars: {
+      expertiseMatch: 94,
+      csrAlignment: 98,
+      socialImpact: 95,
+      feasibility: 92
+    },
+    targetBeneficiaries: '500 Farmers across 3 village clusters',
+    budgetRequired: '₹5,00,000',
+    readinessLevel: 'TRL 5 (Lab & Bench Validated)',
+    capabilities: ['IoT Telemetry', 'LoRaWAN Firmware', 'Capacitive Sensors', 'Solar Micro-grids'],
+    impactSummary: '25% water conservation, 18% higher crop yield, automated SMS drought alerts in vernacular Hindi.',
+    sdgs: ['SDG 2: Zero Hunger', 'SDG 6: Clean Water', 'SDG 12: Responsible Consumption'],
+    risks: 'Seasonal monsoon variations; mitigated by IP67 weatherproof enclosures and solar battery backups.'
+  },
+  {
+    id: 'proj-solar-001',
+    challengeId: 'SOLAR-001',
+    title: 'Solar-Powered Decentralized Cold Storage for Tribal Forest Produce',
+    domain: 'Renewable Energy & Agriculture',
+    district: 'Latehar',
+    university: 'Birla Institute of Technology, Mesra',
+    matchScore: 92,
+    pillars: {
+      expertiseMatch: 90,
+      csrAlignment: 94,
+      socialImpact: 93,
+      feasibility: 89
+    },
+    targetBeneficiaries: '350 Tribal Forest Gatherers (Mahua, Lac, Tamarind)',
+    budgetRequired: '₹7,50,000',
+    readinessLevel: 'TRL 6 (Field Test Unit Operating)',
+    capabilities: ['Thermal Phase Change Storage', 'Solar Inverter Design', 'Supply Chain Traceability'],
+    impactSummary: 'Eliminates 40% post-harvest spoilage of perishable NTFPs, boosting annual tribal household incomes by ₹28,000.',
+    sdgs: ['SDG 7: Clean Energy', 'SDG 8: Decent Work', 'SDG 10: Reduced Inequalities'],
+    risks: 'Intermittent cloudy periods; mitigated by latent heat thermal storage phase-change wax tanks.'
+  },
+  {
+    id: 'proj-water-002',
+    challengeId: 'WATER-002',
+    title: 'IoT-Enabled Arsenic & Fluoride Community Water Filtration Telemetry',
+    domain: 'Water Management & Sanitation',
+    district: 'Sahebganj',
+    university: 'National Institute of Technology, Jamshedpur',
+    matchScore: 89,
+    pillars: {
+      expertiseMatch: 88,
+      csrAlignment: 92,
+      socialImpact: 90,
+      feasibility: 86
+    },
+    targetBeneficiaries: '1,200 Hamlet Residents across 4 Ganga Basin hamlets',
+    budgetRequired: '₹6,00,000',
+    readinessLevel: 'TRL 5 (Pilot Column Tested)',
+    capabilities: ['Adsorbent Regeneration', 'GSM Telemetry', 'Spectrophotometric Sensing'],
+    impactSummary: 'Safe potable water compliance meeting WHO standards for fluorosis-endemic hamlets with real-time Jal Jeevan sync.',
+    sdgs: ['SDG 3: Good Health', 'SDG 6: Clean Water & Sanitation'],
+    risks: 'Filter saturation monitoring; mitigated by ultrasonic automated backwash cycles and GSM alerts.'
+  },
+  {
+    id: 'proj-health-004',
+    challengeId: 'HEALTH-004',
+    title: 'Mobile AI Diagnostic Kiosk for Remote Primary Health Centres',
+    domain: 'Healthcare & Digital Health',
+    district: 'Dumka',
+    university: 'AIIMS Deoghar Collaboration & BIT Sindri',
+    matchScore: 86,
+    pillars: {
+      expertiseMatch: 84,
+      csrAlignment: 90,
+      socialImpact: 88,
+      feasibility: 82
+    },
+    targetBeneficiaries: '800 Remote Patients without primary physician access',
+    budgetRequired: '₹8,00,000',
+    readinessLevel: 'TRL 4 (Lab Prototype Functional)',
+    capabilities: ['Biomedical Sensing', 'Edge Machine Learning', 'Vernacular Audio UI'],
+    impactSummary: 'Rapid 8-parameter point-of-care vital screening under 3 minutes with automated tele-consultation routing.',
+    sdgs: ['SDG 3: Good Health & Well-being', 'SDG 9: Industry & Innovation'],
+    risks: 'Cellular dead zones in forest belts; mitigated by edge-native offline record caching with store-and-forward.'
+  }
+];
+
+const DEFAULT_ROI_SIMULATOR_STATE = {
+  funding: 500000,
+  mentorship: 35,
+  equipmentTier: 2, // 1: Basic Dev Kits, 2: IoT & Lab Benches, 3: Field Stations
+  fieldSites: 3,     // 1 to 8 sites
+  deploymentTier: 2, // 1: Pilot Testing, 2: Cluster Rollout, 3: District Scale
+  whatIfBoost: 50    // 25%, 50%, or 100% boost
+};
+
+let currentRoiState = null;
+
+function getStoredRoiSimulatorState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_ROI_SIMULATOR_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && parsed.funding) {
+        return { ...DEFAULT_ROI_SIMULATOR_STATE, ...parsed };
+      }
+    }
+  } catch (e) {
+    console.error('Failed to parse stored ROI simulator state:', e);
+  }
+  return { ...DEFAULT_ROI_SIMULATOR_STATE };
+}
+
+function saveStoredRoiSimulatorState(state) {
+  if (!state) return;
+  try {
+    localStorage.setItem(STORAGE_ROI_SIMULATOR_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Failed to save ROI simulator state to localStorage:', e);
+  }
+}
+
+function calculateRoiMetrics(state) {
+  const funding = Number(state.funding) || 500000;
+  const mentorship = Number(state.mentorship) || 35;
+  const eqTier = Number(state.equipmentTier) || 2;
+  const sites = Number(state.fieldSites) || 3;
+  const depTier = Number(state.deploymentTier) || 2;
+
+  const projectsSupported = Math.max(1, Math.floor(funding / 400000) + (eqTier >= 2 ? 1 : 0));
+  const studentsMentored = (projectsSupported * 4) + Math.round(mentorship * 0.6) + (eqTier * 3);
+  const communitiesReached = sites + ((depTier - 1) * 3) + Math.floor(funding / 600000);
+  const prototypesAccelerated = Math.min(projectsSupported + 1, Math.floor(funding / 350000) + (eqTier >= 2 ? 1 : 0));
+  const fieldTestsEnabled = sites;
+  const solutionsDeployed = Math.max(1, Math.floor(sites * 0.6) + (depTier - 1));
+  const beneficiaryReach = (communitiesReached * 175) + Math.round(funding / 1100) + (solutionsDeployed * 150);
+  const impactScore = Math.min(99, Math.round(62 + (funding / 2500000) * 18 + (mentorship / 80) * 7 + (eqTier * 4) + (depTier * 4)));
+
+  return {
+    funding,
+    mentorship,
+    eqTier,
+    sites,
+    depTier,
+    projectsSupported,
+    studentsMentored,
+    communitiesReached,
+    prototypesAccelerated,
+    fieldTestsEnabled,
+    solutionsDeployed,
+    beneficiaryReach,
+    impactScore
+  };
+}
+
+function loadOpportunityRoiCenter() {
+  currentRoiState = getStoredRoiSimulatorState();
+  renderOpportunityRoiCenter();
+}
+
+function renderOpportunityRoiCenter() {
+  const container = document.getElementById('opportunityRoiContainer');
+  if (!container) return;
+
+  if (!currentRoiState) {
+    currentRoiState = getStoredRoiSimulatorState();
+  }
+
+  const cur = calculateRoiMetrics(currentRoiState);
+
+  // What-If Proposed Calculations
+  const boost = Number(currentRoiState.whatIfBoost) || 50;
+  const boostMultiplier = 1 + (boost / 100);
+  const proposedState = {
+    funding: Math.round(currentRoiState.funding * boostMultiplier),
+    mentorship: Math.min(80, Math.round(currentRoiState.mentorship * boostMultiplier)),
+    equipmentTier: Math.min(3, currentRoiState.equipmentTier + (boost >= 50 ? 1 : 0)),
+    fieldSites: Math.min(8, Math.round(currentRoiState.fieldSites * boostMultiplier)),
+    deploymentTier: Math.min(3, currentRoiState.deploymentTier + (boost >= 50 ? 1 : 0)),
+    whatIfBoost: boost
+  };
+  const prop = calculateRoiMetrics(proposedState);
+
+  // Deltas
+  const dFunding = prop.funding - cur.funding;
+  const dStudents = prop.studentsMentored - cur.studentsMentored;
+  const dCommunities = prop.communitiesReached - cur.communitiesReached;
+  const dPrototypes = prop.prototypesAccelerated - cur.prototypesAccelerated;
+  const dDeployments = prop.solutionsDeployed - cur.solutionsDeployed;
+  const dScore = prop.impactScore - cur.impactScore;
+
+  container.innerHTML = `
+    <!-- Top Hero Banner -->
+    <div class="roi-hero-banner">
+      <div class="roi-hero-title">
+        <span>🎯</span>
+        <span>Industry Opportunity & ROI Center</span>
+        <span class="badge badge-resolved" style="background:#10b981;color:white;border:none;font-size:12px;font-weight:800;padding:4px 10px">
+          SIH 2026 PS26043
+        </span>
+      </div>
+      <div class="roi-hero-subtitle">
+        Data-driven CSR allocation and university innovation matching engine for Jharkhand. Evaluate readiness, forecast measurable societal returns, and model your strategic footprint.
+      </div>
+      <div class="roi-microcopy-pill">
+        <span>💡</span>
+        <span>"See where your contribution can create the highest measurable impact."</span>
+      </div>
+    </div>
+
+    <!-- ════════ 1. OPPORTUNITY SCORE ════════ -->
+    <div>
+      <div class="roi-section-head">
+        <div>
+          <h2 class="roi-section-title">
+            <span>🏆</span> 1. Opportunity Score
+          </h2>
+          <div class="roi-section-sub">
+            Ranked evaluation of higher education societal innovations based on capability match, CSR criteria, and feasibility.
+          </div>
+        </div>
+        <span class="badge badge-assigned" style="font-size:12px;font-weight:750">
+          AI Evaluated • 4 Verified HEI Projects
+        </span>
+      </div>
+
+      <div class="opportunity-grid">
+        ${OPPORTUNITY_ROI_PROJECTS.map(p => {
+          const badgeClass = p.matchScore >= 90 ? 'high' : 'good';
+          return `
+            <div class="opportunity-card">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
+                  <div>
+                    <span style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px">
+                      #${p.challengeId} • ${p.domain}
+                    </span>
+                    <h3 style="font-size:15.5px;font-weight:850;color:var(--gray-900);line-height:1.35;margin:4px 0">
+                      ${p.title}
+                    </h3>
+                    <div style="font-size:12px;color:var(--gray-500)">
+                      📍 ${p.district}, Jharkhand • 🏛️ ${p.university}
+                    </div>
+                  </div>
+                  <div class="opp-score-badge ${badgeClass}" title="Opportunity Match Score">
+                    ${p.matchScore}
+                  </div>
+                </div>
+
+                <div class="pillar-row">
+                  <div class="pillar-bar-item">
+                    <div class="pillar-bar-label">
+                      <span>Expertise Match</span>
+                      <span style="color:var(--primary)">${p.pillars.expertiseMatch}%</span>
+                    </div>
+                    <div class="progress-bar" style="height:5px">
+                      <div class="progress-fill" style="width:${p.pillars.expertiseMatch}%;background:var(--primary)"></div>
+                    </div>
+                  </div>
+
+                  <div class="pillar-bar-item">
+                    <div class="pillar-bar-label">
+                      <span>CSR Alignment</span>
+                      <span style="color:#059669">${p.pillars.csrAlignment}%</span>
+                    </div>
+                    <div class="progress-bar" style="height:5px">
+                      <div class="progress-fill" style="width:${p.pillars.csrAlignment}%;background:#059669"></div>
+                    </div>
+                  </div>
+
+                  <div class="pillar-bar-item">
+                    <div class="pillar-bar-label">
+                      <span>Social Impact Potential</span>
+                      <span style="color:#d97706">${p.pillars.socialImpact}%</span>
+                    </div>
+                    <div class="progress-bar" style="height:5px">
+                      <div class="progress-fill" style="width:${p.pillars.socialImpact}%;background:#d97706"></div>
+                    </div>
+                  </div>
+
+                  <div class="pillar-bar-item">
+                    <div class="pillar-bar-label">
+                      <span>Implementation Feasibility</span>
+                      <span style="color:#7c3aed">${p.pillars.feasibility}%</span>
+                    </div>
+                    <div class="progress-bar" style="height:5px">
+                      <div class="progress-fill" style="width:${p.pillars.feasibility}%;background:#7c3aed"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gray-100);padding-top:12px;gap:8px">
+                <span class="badge" style="font-size:10.5px;background:#f1f5f9;color:var(--gray-600)">
+                  ${p.readinessLevel.split('(')[0].trim()}
+                </span>
+                <button onclick="openOpportunityAnalysisModal('${p.id}')" class="btn btn-sm btn-outline-primary" style="font-weight:700;padding:5px 12px;font-size:12px">
+                  <span>📊</span> View Analysis
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+
+    <!-- ════════ 2 & 3. CONTRIBUTION SIMULATOR & CSR IMPACT CALCULATOR ════════ -->
+    <div class="simulator-card">
+      <div class="roi-section-head">
+        <div>
+          <h2 class="roi-section-title">
+            <span>⚙️</span> 2. Contribution Simulator &amp; 3. CSR Impact Calculator
+          </h2>
+          <div class="roi-section-sub">
+            Interactive modeling engine: adjust support parameters to dynamically calculate projected social outcomes across target districts.
+          </div>
+        </div>
+        <button onclick="resetRoiSimulator()" class="btn btn-sm btn-ghost" style="border:1px solid var(--gray-200);font-weight:600">
+          ↺ Reset Defaults
+        </button>
+      </div>
+
+      <div class="simulator-layout-grid" style="margin-top:16px">
+        
+        <!-- Controls Column (Simulator) -->
+        <div style="background:#fafbfc;border:1px solid var(--gray-200);border-radius:var(--radius-lg);padding:20px 22px">
+          <div style="font-size:13.5px;font-weight:800;color:var(--gray-900);margin-bottom:14px;display:flex;align-items:center;gap:6px">
+            <span>🎛️</span> Support Allocation Parameters
+          </div>
+
+          <!-- 1. Funding Slider -->
+          <div class="sim-slider-row">
+            <div class="sim-slider-header">
+              <span>💰 Funding Amount</span>
+              <span class="sim-val-bubble" id="simFundingText">₹${Number(currentRoiState.funding).toLocaleString('en-IN')}</span>
+            </div>
+            <input type="range" min="100000" max="2500000" step="50000" value="${currentRoiState.funding}" class="sim-slider-input" oninput="onRoiSliderChange('funding', this.value)">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-400)">
+              <span>₹1 Lakh</span>
+              <span>₹12.5 Lakhs</span>
+              <span>₹25 Lakhs</span>
+            </div>
+          </div>
+
+          <!-- 2. Mentorship Slider -->
+          <div class="sim-slider-row">
+            <div class="sim-slider-header">
+              <span>👨‍🏫 Technical Mentorship</span>
+              <span class="sim-val-bubble" id="simMentorshipText">${currentRoiState.mentorship} hrs / month</span>
+            </div>
+            <input type="range" min="10" max="80" step="5" value="${currentRoiState.mentorship}" class="sim-slider-input" oninput="onRoiSliderChange('mentorship', this.value)">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-400)">
+              <span>10 hrs</span>
+              <span>45 hrs</span>
+              <span>80 hrs</span>
+            </div>
+          </div>
+
+          <!-- 3. Hardware / Equipment Tiers -->
+          <div style="margin-bottom:16px">
+            <div style="font-size:12.5px;font-weight:700;color:var(--gray-800);margin-bottom:6px">
+              🛠️ Hardware / Equipment Support
+            </div>
+            <div class="sim-tier-group">
+              <button class="sim-tier-btn ${currentRoiState.equipmentTier === 1 ? 'active' : ''}" onclick="setRoiTier('equipmentTier', 1)">
+                Basic Dev Kits
+              </button>
+              <button class="sim-tier-btn ${currentRoiState.equipmentTier === 2 ? 'active' : ''}" onclick="setRoiTier('equipmentTier', 2)">
+                IoT &amp; Lab Benches
+              </button>
+              <button class="sim-tier-btn ${currentRoiState.equipmentTier === 3 ? 'active' : ''}" onclick="setRoiTier('equipmentTier', 3)">
+                Field Test Stations
+              </button>
+            </div>
+          </div>
+
+          <!-- 4. Field Testing Sites -->
+          <div style="margin-bottom:16px">
+            <div style="font-size:12.5px;font-weight:700;color:var(--gray-800);margin-bottom:6px">
+              🧪 Field Testing Support
+            </div>
+            <div class="sim-tier-group">
+              <button class="sim-tier-btn ${currentRoiState.fieldSites === 1 ? 'active' : ''}" onclick="setRoiTier('fieldSites', 1)">
+                1 Pilot Site
+              </button>
+              <button class="sim-tier-btn ${currentRoiState.fieldSites === 3 ? 'active' : ''}" onclick="setRoiTier('fieldSites', 3)">
+                3 Village Sites
+              </button>
+              <button class="sim-tier-btn ${currentRoiState.fieldSites === 6 ? 'active' : ''}" onclick="setRoiTier('fieldSites', 6)">
+                6 Cluster Sites
+              </button>
+            </div>
+          </div>
+
+          <!-- 5. Deployment Support -->
+          <div>
+            <div style="font-size:12.5px;font-weight:700;color:var(--gray-800);margin-bottom:6px">
+              🚀 Deployment Support
+            </div>
+            <div class="sim-tier-group">
+              <button class="sim-tier-btn ${currentRoiState.deploymentTier === 1 ? 'active' : ''}" onclick="setRoiTier('deploymentTier', 1)">
+                Pilot Testing
+              </button>
+              <button class="sim-tier-btn ${currentRoiState.deploymentTier === 2 ? 'active' : ''}" onclick="setRoiTier('deploymentTier', 2)">
+                Cluster Rollout
+              </button>
+              <button class="sim-tier-btn ${currentRoiState.deploymentTier === 3 ? 'active' : ''}" onclick="setRoiTier('deploymentTier', 3)">
+                District Scale
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Outputs Column (CSR Impact Calculator) -->
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13.5px;font-weight:800;color:var(--gray-900);display:flex;align-items:center;gap:6px">
+              <span>📊</span> Projected CSR Social Return
+            </div>
+            <span class="badge" style="background:#eff6ff;color:var(--primary);border-color:#bfdbfe;font-size:11px;font-weight:750">
+              Composite Social ROI: ${cur.impactScore}/100
+            </span>
+          </div>
+
+          <div class="roi-calc-grid">
+            <div class="roi-calc-stat-card">
+              <div style="font-size:20px">🎓</div>
+              <div>
+                <div class="roi-stat-num" id="calcStudents">${cur.studentsMentored}</div>
+                <div class="roi-stat-lbl">Students Benefited / Mentored</div>
+              </div>
+              <div style="font-size:10.5px;color:var(--gray-400);margin-top:4px">Estimated direct cohort</div>
+            </div>
+
+            <div class="roi-calc-stat-card">
+              <div style="font-size:20px">🏘️</div>
+              <div>
+                <div class="roi-stat-num" id="calcCommunities">${cur.communitiesReached}</div>
+                <div class="roi-stat-lbl">Communities / Villages Reached</div>
+              </div>
+              <div style="font-size:10.5px;color:var(--gray-400);margin-top:4px">Estimated target hamlets</div>
+            </div>
+
+            <div class="roi-calc-stat-card">
+              <div style="font-size:20px">🔬</div>
+              <div>
+                <div class="roi-stat-num" id="calcPrototypes">${cur.prototypesAccelerated}</div>
+                <div class="roi-stat-lbl">Prototypes Accelerated</div>
+              </div>
+              <div style="font-size:10.5px;color:var(--gray-400);margin-top:4px">Estimated functional units</div>
+            </div>
+
+            <div class="roi-calc-stat-card">
+              <div style="font-size:20px">🧪</div>
+              <div>
+                <div class="roi-stat-num" id="calcFieldTests">${cur.fieldTestsEnabled}</div>
+                <div class="roi-stat-lbl">Field Tests Enabled</div>
+              </div>
+              <div style="font-size:10.5px;color:var(--gray-400);margin-top:4px">Estimated validation sites</div>
+            </div>
+
+            <div class="roi-calc-stat-card">
+              <div style="font-size:20px">🚀</div>
+              <div>
+                <div class="roi-stat-num" id="calcDeployments">${cur.solutionsDeployed}</div>
+                <div class="roi-stat-lbl">Solutions Deployed</div>
+              </div>
+              <div style="font-size:10.5px;color:var(--gray-400);margin-top:4px">Estimated pilot rollouts</div>
+            </div>
+
+            <div class="roi-calc-stat-card" style="background:#f0fdf4;border-color:#bbf7d0">
+              <div style="font-size:20px">👥</div>
+              <div>
+                <div class="roi-stat-num" style="color:#047857" id="calcBeneficiaries">${Number(cur.beneficiaryReach).toLocaleString('en-IN')}</div>
+                <div class="roi-stat-lbl" style="color:#065f46">Estimated Beneficiary Reach</div>
+              </div>
+              <div style="font-size:10.5px;color:#059669;margin-top:4px">Estimated rural citizens</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:12px 14px;font-size:12px;color:var(--gray-600);line-height:1.5">
+            <strong>Estimated Social ROI Formula:</strong> Metric projections are generated by the JanSetu Institutional Matching Model calibrated for Jharkhand's aspirational districts. Results are forward-looking estimates based on selected allocation parameters.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ════════ 4. WHAT-IF ANALYSIS ════════ -->
+    <div class="card" style="padding:22px 26px">
+      <div class="roi-section-head">
+        <div>
+          <h2 class="roi-section-title">
+            <span>📈</span> 4. What If We Increase Our Support?
+          </h2>
+          <div class="roi-section-sub">
+            Simulate scenario expansions to compare current contribution levels against prospective CSR funding boosts.
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="font-size:12px;font-weight:700;color:var(--gray-600)">Expansion Preset:</span>
+          <button class="btn btn-sm ${boost === 25 ? 'btn-primary' : 'btn-ghost'}" style="padding:4px 10px;font-size:11.5px;border:1px solid var(--gray-200)" onclick="setWhatIfBoost(25)">
+            +25%
+          </button>
+          <button class="btn btn-sm ${boost === 50 ? 'btn-primary' : 'btn-ghost'}" style="padding:4px 10px;font-size:11.5px;border:1px solid var(--gray-200)" onclick="setWhatIfBoost(50)">
+            +50% (Recommended)
+          </button>
+          <button class="btn btn-sm ${boost === 100 ? 'btn-primary' : 'btn-ghost'}" style="padding:4px 10px;font-size:11.5px;border:1px solid var(--gray-200)" onclick="setWhatIfBoost(100)">
+            +100% (2x Scale)
+          </button>
+        </div>
+      </div>
+
+      <div class="what-if-grid" style="margin-top:16px">
+        
+        <!-- Card 1: Current Support -->
+        <div class="what-if-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gray-100);padding-bottom:10px">
+            <span style="font-size:12px;font-weight:800;color:var(--gray-500);letter-spacing:0.5px">CURRENT SUPPORT LEVEL</span>
+            <span class="badge" style="background:#f1f5f9;color:var(--gray-700);font-size:11px">Base Model</span>
+          </div>
+
+          <div style="font-size:24px;font-weight:850;color:var(--gray-900)">
+            ₹${Number(cur.funding).toLocaleString('en-IN')}
+            <span style="font-size:12.5px;font-weight:600;color:var(--gray-500);display:block">Committed Financial Grant</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--gray-600)">Students Benefited:</span>
+              <strong>${cur.studentsMentored} Students</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--gray-600)">Communities Reached:</span>
+              <strong>${cur.communitiesReached} Villages</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--gray-600)">Prototypes Accelerated:</span>
+              <strong>${cur.prototypesAccelerated} Prototypes</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--gray-600)">Deployments Enabled:</span>
+              <strong>${cur.solutionsDeployed} Deployments</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between">
+              <span style="color:var(--gray-600)">Social Impact Score:</span>
+              <strong style="color:var(--primary)">${cur.impactScore} / 100</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Proposed Support -->
+        <div class="what-if-card proposed">
+          <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #bfdbfe;padding-bottom:10px">
+            <span style="font-size:12px;font-weight:800;color:var(--primary);letter-spacing:0.5px">PROPOSED SUPPORT (+${boost}%)</span>
+            <span class="what-if-delta-badge">
+              +${boost}% Scale-Up
+            </span>
+          </div>
+
+          <div style="font-size:24px;font-weight:850;color:var(--primary)">
+            ₹${Number(prop.funding).toLocaleString('en-IN')}
+            <span class="what-if-delta-badge" style="font-size:11px;margin-left:6px">+₹${(dFunding / 100000).toFixed(1)}L Boost</span>
+            <span style="font-size:12.5px;font-weight:600;color:var(--gray-600);display:block">Expanded Allocation</span>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="color:var(--gray-700)">Students Benefited:</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <strong>${prop.studentsMentored} Students</strong>
+                <span class="what-if-delta-badge">+${dStudents} (+${Math.round((dStudents / cur.studentsMentored) * 100)}%)</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="color:var(--gray-700)">Communities Reached:</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <strong>${prop.communitiesReached} Villages</strong>
+                <span class="what-if-delta-badge">+${dCommunities} (+${Math.round((dCommunities / cur.communitiesReached) * 100)}%)</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="color:var(--gray-700)">Prototypes Accelerated:</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <strong>${prop.prototypesAccelerated} Prototypes</strong>
+                <span class="what-if-delta-badge">+${dPrototypes} (+${Math.round((dPrototypes / cur.prototypesAccelerated) * 100)}%)</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="color:var(--gray-700)">Deployments Enabled:</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <strong>${prop.solutionsDeployed} Deployments</strong>
+                <span class="what-if-delta-badge">+${dDeployments} (+${Math.round((dDeployments / cur.solutionsDeployed) * 100)}%)</span>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="color:var(--gray-700)">Social Impact Score:</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <strong style="color:#059669">${prop.impactScore} / 100</strong>
+                <span class="what-if-delta-badge">+${dScore} pts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ════════ 5. RECOMMENDED OPPORTUNITIES ════════ -->
+    <div>
+      <div class="roi-section-head">
+        <div>
+          <h2 class="roi-section-title">
+            <span>✨</span> 5. Recommended for Your Organization
+          </h2>
+          <div class="roi-section-sub">
+            Ranked opportunities matching ABC Technologies' CSR focus, technical competencies, and district priorities.
+          </div>
+        </div>
+        <span class="badge badge-assigned" style="font-size:12px">Ranked by Strategic ROI</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${OPPORTUNITY_ROI_PROJECTS.map((p, idx) => `
+          <div class="rec-opp-item">
+            <div style="display:flex;align-items:flex-start;gap:14px;flex:1;min-width:280px">
+              <span style="font-size:12px;font-weight:850;color:white;background:var(--primary);width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                #${idx + 1}
+              </span>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:11px;font-weight:800;color:var(--primary);text-transform:uppercase">
+                    #${p.challengeId} • ${p.domain}
+                  </span>
+                  <span class="badge" style="background:#eff6ff;color:var(--primary);border-color:#bfdbfe;font-size:11px">
+                    Match Score: ${p.matchScore}/100
+                  </span>
+                  <span class="badge" style="background:#ecfdf5;color:#047857;border-color:#a7f3d0;font-size:11px">
+                    ${p.pillars.csrAlignment}% CSR Alignment
+                  </span>
+                </div>
+                <h3 style="font-size:16px;font-weight:850;color:var(--gray-900);margin:4px 0 3px">
+                  ${p.title}
+                </h3>
+                <div style="font-size:12.5px;color:var(--gray-500);margin-bottom:6px">
+                  📍 ${p.district}, Jharkhand &nbsp;•&nbsp; 🏛️ ${p.university} &nbsp;•&nbsp; 🎯 <strong>Beneficiaries:</strong> ${p.targetBeneficiaries}
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap">
+                  ${p.capabilities.map(cap => `
+                    <span style="font-size:11px;padding:2px 8px;background:#f1f5f9;border-radius:4px;color:var(--gray-700);font-weight:600">
+                      ${cap}
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+              <button onclick="openOpportunityAnalysisModal('${p.id}')" class="btn btn-sm btn-ghost" style="border:1px solid var(--gray-200);font-weight:700">
+                Analyze Opportunity
+              </button>
+              <button onclick="startCollabFromRoi('${p.id}', '${p.title.replace(/'/g, "\\'")}')" class="btn btn-sm btn-primary" style="display:inline-flex;align-items:center;gap:6px;font-weight:700;box-shadow:var(--shadow-sm)">
+                <span>🤝</span> Start Collaboration
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function onRoiSliderChange(param, val) {
+  if (!currentRoiState) currentRoiState = getStoredRoiSimulatorState();
+  currentRoiState[param] = Number(val);
+  saveStoredRoiSimulatorState(currentRoiState);
+  renderOpportunityRoiCenter();
+}
+
+function setRoiTier(param, val) {
+  if (!currentRoiState) currentRoiState = getStoredRoiSimulatorState();
+  currentRoiState[param] = Number(val);
+  saveStoredRoiSimulatorState(currentRoiState);
+  renderOpportunityRoiCenter();
+}
+
+function setWhatIfBoost(boost) {
+  if (!currentRoiState) currentRoiState = getStoredRoiSimulatorState();
+  currentRoiState.whatIfBoost = Number(boost);
+  saveStoredRoiSimulatorState(currentRoiState);
+  renderOpportunityRoiCenter();
+}
+
+function resetRoiSimulator() {
+  currentRoiState = { ...DEFAULT_ROI_SIMULATOR_STATE };
+  saveStoredRoiSimulatorState(currentRoiState);
+  renderOpportunityRoiCenter();
+  Toast.info('Simulator Reset', 'Restored default contribution allocation parameters.');
+}
+
+function openOpportunityAnalysisModal(projectId) {
+  const p = OPPORTUNITY_ROI_PROJECTS.find(item => item.id === projectId) || OPPORTUNITY_ROI_PROJECTS[0];
+  const titleEl = document.getElementById('oppModalTitle');
+  const subEl = document.getElementById('oppModalSub');
+  const scoreBadge = document.getElementById('oppModalScoreBadge');
+  const bodyEl = document.getElementById('oppModalBody');
+  const actionsEl = document.getElementById('oppModalFooterActions');
+
+  if (titleEl) titleEl.textContent = p.title;
+  if (subEl) subEl.textContent = `Challenge #${p.challengeId} • ${p.domain} • ${p.university} (${p.district}, Jharkhand)`;
+  if (scoreBadge) scoreBadge.textContent = `${p.matchScore}/100 Match`;
+
+  if (bodyEl) {
+    bodyEl.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;margin-bottom:18px">
+        <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--gray-500);font-weight:700">EXPERTISE MATCH</div>
+          <div style="font-size:20px;font-weight:850;color:var(--primary);margin-top:2px">${p.pillars.expertiseMatch}%</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--gray-500);font-weight:700">CSR ALIGNMENT</div>
+          <div style="font-size:20px;font-weight:850;color:#059669;margin-top:2px">${p.pillars.csrAlignment}%</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--gray-500);font-weight:700">SOCIAL IMPACT</div>
+          <div style="font-size:20px;font-weight:850;color:#d97706;margin-top:2px">${p.pillars.socialImpact}%</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--gray-500);font-weight:700">FEASIBILITY</div>
+          <div style="font-size:20px;font-weight:850;color:#7c3aed;margin-top:2px">${p.pillars.feasibility}%</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-md);padding:14px">
+          <div style="font-size:11.5px;font-weight:800;color:var(--primary);text-transform:uppercase">Measurable Social Impact Rationale</div>
+          <div style="font-size:13.5px;color:var(--gray-800);margin-top:4px;line-height:1.5">${p.impactSummary}</div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:14px">
+          <div style="font-size:11.5px;font-weight:800;color:var(--gray-700);text-transform:uppercase">Target Beneficiaries & Scope</div>
+          <div style="font-size:13.5px;color:var(--gray-800);margin-top:4px">${p.targetBeneficiaries}</div>
+          <div style="font-size:12px;color:var(--gray-500);margin-top:2px">Budget Allocation Benchmark: <strong>${p.budgetRequired}</strong> &nbsp;•&nbsp; Technology Readiness: <strong>${p.readinessLevel}</strong></div>
+        </div>
+
+        <div style="background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);padding:14px">
+          <div style="font-size:11.5px;font-weight:800;color:var(--gray-700);text-transform:uppercase;margin-bottom:6px">UN Sustainable Development Goals (SDGs)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${p.sdgs.map(s => `<span class="badge badge-assigned" style="font-size:11px">${s}</span>`).join('')}
+          </div>
+        </div>
+
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:var(--radius-md);padding:14px">
+          <div style="font-size:11.5px;font-weight:800;color:#991b1b;text-transform:uppercase">Risk Factor & Engineering Mitigation</div>
+          <div style="font-size:13px;color:#7f1d1d;margin-top:4px">${p.risks}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  if (actionsEl) {
+    actionsEl.innerHTML = `
+      <button onclick="closeModal('opportunityAnalysisModal')" class="btn btn-ghost">Close</button>
+      <button onclick="startCollabFromRoi('${p.id}', '${p.title.replace(/'/g, "\\'")}')" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px;font-weight:700">
+        <span>🤝</span> Start Collaboration
+      </button>
+    `;
+  }
+
+  openModal('opportunityAnalysisModal');
+}
+
+function startCollabFromRoi(projectId, title) {
+  closeModal('opportunityAnalysisModal');
+  // Reuses the existing Express Interest modal
+  openPartnerModal(projectId, title);
+}
+
+// Window bindings for Opportunity & ROI Center
+window.loadOpportunityRoiCenter = loadOpportunityRoiCenter;
+window.onRoiSliderChange = onRoiSliderChange;
+window.setRoiTier = setRoiTier;
+window.setWhatIfBoost = setWhatIfBoost;
+window.resetRoiSimulator = resetRoiSimulator;
+window.openOpportunityAnalysisModal = openOpportunityAnalysisModal;
+window.startCollabFromRoi = startCollabFromRoi;
 
 window.openModal = (id) => document.getElementById(id).classList.add('open');
 window.closeModal = (id) => document.getElementById(id).classList.remove('open');
