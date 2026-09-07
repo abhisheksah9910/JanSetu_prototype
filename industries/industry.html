@@ -8,23 +8,1630 @@
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/css/components.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- Immediate Auth Guard & BF-Cache Protection -->
-  <script>
-    (function () {
-      function checkIndustryAuth() {
-        var token = localStorage.getItem('is_token') || localStorage.getItem('token');
-        if (!token) {
-          window.location.replace('/login.html');
-          return false;
-        }
-        return true;
+  <style>
+    /* ── Industry Partner Capability Profile Styles ── */
+    .profile-container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      padding-bottom: 30px;
+    }
+
+    .profile-page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 4px;
+    }
+
+    .profile-page-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--gray-900);
+      letter-spacing: -0.5px;
+    }
+
+    .profile-page-subtitle {
+      font-size: 13.5px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* Identity Card */
+    .profile-identity-card {
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--gray-200);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .profile-identity-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+
+    .profile-identity-main {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .profile-avatar-box {
+      width: 72px;
+      height: 72px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary-50), var(--accent-50));
+      border: 2px solid var(--primary-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(26,86,219,0.08);
+    }
+
+    .profile-identity-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--gray-900);
+      line-height: 1.25;
+    }
+
+    .profile-identity-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--gray-500);
+      flex-wrap: wrap;
+    }
+
+    .profile-identity-desc {
+      font-size: 13.5px;
+      color: var(--gray-600);
+      line-height: 1.6;
+      margin-top: 10px;
+      max-width: 580px;
+    }
+
+    .profile-completion-card {
+      background: var(--gray-50);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 16px 20px;
+      min-width: 250px;
+      flex-shrink: 0;
+    }
+
+    .completion-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-700);
+    }
+
+    .completion-percent-text {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 9px;
+      background: var(--gray-200);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin: 9px 0 7px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      border-radius: var(--radius-full);
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .completion-subtext {
+      font-size: 11.5px;
+      color: var(--gray-500);
+    }
+
+    /* Section Cards */
+    .profile-section-card {
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .profile-section-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--gray-100);
+      background: #fafbfc;
+    }
+
+    .profile-section-title {
+      font-size: 16px;
+      font-weight: 750;
+      color: var(--gray-900);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile-section-subtitle {
+      font-size: 12.5px;
+      color: var(--gray-500);
+      margin-top: 3px;
+    }
+
+    .profile-section-body {
+      padding: 22px 24px;
+    }
+
+    /* Tags & Chips */
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 38px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    .tag-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 14px;
+      border-radius: var(--radius-full);
+      background: var(--primary-50);
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--primary-100);
+      transition: all var(--transition-fast);
+      animation: fadeIn 0.2s ease;
+    }
+
+    .tag-chip-remove {
+      cursor: pointer;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      background: rgba(26, 86, 219, 0.12);
+      color: var(--primary);
+      line-height: 1;
+      border: none;
+      transition: all var(--transition-fast);
+    }
+
+    .tag-chip-remove:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    .suggestion-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+    }
+
+    .suggestions-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .suggestion-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      background: var(--gray-50);
+      color: var(--gray-700);
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px dashed var(--gray-300);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .suggestion-chip:hover {
+      background: var(--primary-50);
+      color: var(--primary);
+      border-color: var(--primary-200);
+      border-style: solid;
+      transform: translateY(-1px);
+    }
+
+    /* Selectable Cards & Pills */
+    .selectable-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 12px;
+    }
+
+    .selectable-card {
+      padding: 14px 16px;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--gray-200);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .selectable-card:hover {
+      border-color: var(--primary-200);
+      background: var(--gray-50);
+      transform: translateY(-1px);
+    }
+
+    .selectable-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-50);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    .selectable-card-checkbox {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 1.8px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: white;
+      font-size: 11px;
+      color: transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .selectable-card.selected .selectable-card-checkbox {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .selectable-card-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .selectable-card.selected .selectable-card-title {
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    /* CSR / Tag Pills */
+    .pills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .selectable-pill {
+      padding: 7px 16px;
+      border-radius: var(--radius-full);
+      border: 1.5px solid var(--gray-200);
+      background: white;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .selectable-pill:hover {
+      border-color: var(--accent);
+      background: var(--accent-50);
+      color: var(--accent);
+    }
+
+    .selectable-pill.selected {
+      background: var(--accent-50);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    /* Radio Options Grid */
+    .radio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+      gap: 10px;
+    }
+
+    .radio-box {
+      padding: 13px 14px;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--gray-200);
+      background: white;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .radio-box:hover {
+      border-color: var(--primary-200);
+      background: var(--gray-50);
+    }
+
+    .radio-box.selected {
+      border-color: var(--primary);
+      background: var(--primary-50);
+      color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    /* District Selection Box */
+    .districts-box {
+      margin-top: 18px;
+      padding: 18px;
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      animation: fadeIn 0.25s ease;
+    }
+
+    .districts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 12.5px;
+      color: var(--gray-600);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .district-pill {
+      padding: 5px 12px;
+      border-radius: var(--radius-full);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-700);
+      background: white;
+      border: 1px solid var(--gray-200);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      user-select: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .district-pill:hover {
+      border-color: var(--primary-200);
+      color: var(--primary);
+    }
+
+    .district-pill.selected {
+      background: var(--accent-50);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Action Bar */
+    .profile-actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 24px;
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--gray-200);
+      box-shadow: var(--shadow-sm);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .ai-badge-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      color: var(--gray-500);
+    }
+
+    .ai-badge-icon {
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      background: var(--primary-50);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    /* ── Challenge Details & Express Interest Styles ── */
+    .challenge-details-container {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      padding-bottom: 30px;
+    }
+
+    .challenge-header-card {
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--gray-200);
+      padding: 26px 28px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .challenge-header-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+
+    .challenge-top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .challenge-title-large {
+      font-size: 24px;
+      font-weight: 850;
+      color: var(--gray-900);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    .challenge-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    /* Impact Cards Grid */
+    .impact-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+    }
+
+    .impact-card {
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all var(--transition-fast);
+    }
+
+    .impact-card:hover {
+      background: white;
+      border-color: var(--primary-200);
+      transform: translateY(-1px);
+    }
+
+    .impact-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .impact-value {
+      font-size: 16px;
+      font-weight: 750;
+      color: var(--gray-900);
+      line-height: 1.2;
+    }
+
+    .impact-label {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 3px;
+    }
+
+    /* HEI Information Box */
+    .hei-info-box {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 18px 20px;
+      background: #fafbfc;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+      flex-wrap: wrap;
+    }
+
+    .hei-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 12px;
+      background: var(--primary-50);
+      color: var(--primary);
+      border: 1.5px solid var(--primary-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    /* Lifecycle Timeline */
+    .timeline-steps {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      position: relative;
+      overflow-x: auto;
+      padding: 10px 0 16px;
+      gap: 8px;
+    }
+
+    .timeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex: 1;
+      min-width: 90px;
+      position: relative;
+    }
+
+    .timeline-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 55%;
+      width: 90%;
+      height: 2px;
+      background: var(--gray-200);
+      z-index: 1;
+    }
+
+    .timeline-step.completed:not(:last-child)::after {
+      background: var(--accent);
+    }
+
+    .timeline-step.active:not(:last-child)::after {
+      background: linear-gradient(90deg, var(--primary), var(--gray-200));
+    }
+
+    .timeline-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray-500);
+      position: relative;
+      z-index: 2;
+      transition: all var(--transition-fast);
+    }
+
+    .timeline-step.completed .timeline-dot {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .timeline-step.active .timeline-dot {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      box-shadow: 0 0 0 4px var(--primary-100);
+    }
+
+    .timeline-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-top: 8px;
+      line-height: 1.3;
+    }
+
+    .timeline-step.active .timeline-label {
+      color: var(--primary);
+      font-weight: 750;
+    }
+
+    /* Modal Styles */
+    .collab-modal-body {
+      max-height: 75vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .collab-step-title {
+      font-size: 14px;
+      font-weight: 750;
+      color: var(--gray-900);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .collab-step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--primary-50);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .collab-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .collab-card {
+      padding: 12px 14px;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid var(--gray-200);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .collab-card:hover {
+      border-color: var(--primary-200);
+      background: var(--gray-50);
+    }
+
+    .collab-card.selected {
+      border-color: var(--primary);
+      background: var(--primary-50);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    .collab-card-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      border: 1.8px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: white;
+      font-size: 11px;
+      color: transparent;
+      transition: all var(--transition-fast);
+    }
+
+    .collab-card.selected .collab-card-checkbox {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .collab-card-text {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--gray-800);
+    }
+
+    .collab-card.selected .collab-card-text {
+      color: var(--primary-dark);
+    }
+
+    .conditional-panel {
+      background: #f8fafc;
+      border: 1.5px dashed var(--primary-200);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      margin-bottom: 18px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .duration-pills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .duration-pill {
+      padding: 7px 14px;
+      border-radius: var(--radius-full);
+      border: 1.5px solid var(--gray-200);
+      background: white;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      user-select: none;
+    }
+
+    .duration-pill:hover {
+      border-color: var(--primary-300);
+      background: var(--gray-50);
+    }
+
+    /* ── Upgraded Project Collaboration Workspace Styles (SIH 2026 PS26043) ── */
+    .workspace-container {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      padding-bottom: 40px;
+    }
+
+    .workspace-top-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .workspace-header-card {
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--gray-200);
+      padding: 24px 28px;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .workspace-header-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), #3b82f6, var(--accent));
+    }
+
+    .workspace-title {
+      font-size: 22px;
+      font-weight: 850;
+      color: var(--gray-900);
+      line-height: 1.3;
+      margin-bottom: 8px;
+    }
+
+    .workspace-meta-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--gray-600);
+      margin-bottom: 6px;
+    }
+
+    .workspace-parties-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: #fafbfc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      flex-wrap: wrap;
+    }
+
+    .workspace-party-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 650;
+      color: var(--gray-800);
+    }
+
+    .workspace-progress-panel {
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    /* Lifecycle Stepper (10 Stages Flow) */
+    .workspace-lifecycle-card {
+      background: white;
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--gray-200);
+      padding: 18px 22px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .lifecycle-10-track {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      overflow-x: auto;
+      padding: 10px 4px 14px;
+      position: relative;
+      gap: 8px;
+    }
+
+    .lifecycle-10-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex: 1;
+      min-width: 85px;
+      position: relative;
+    }
+
+    .lifecycle-10-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 55%;
+      width: 90%;
+      height: 2px;
+      background: var(--gray-200);
+      z-index: 1;
+    }
+
+    .lifecycle-10-step.completed:not(:last-child)::after {
+      background: var(--accent);
+    }
+
+    .lifecycle-10-step.in-progress:not(:last-child)::after {
+      background: linear-gradient(90deg, var(--primary), var(--gray-200));
+    }
+
+    .lifecycle-10-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--gray-500);
+      position: relative;
+      z-index: 2;
+      transition: all var(--transition-fast);
+    }
+
+    .lifecycle-10-step.completed .lifecycle-10-dot {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .lifecycle-10-step.in-progress .lifecycle-10-dot {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+      box-shadow: 0 0 0 4px var(--primary-100);
+    }
+
+    .lifecycle-10-label {
+      font-size: 10.5px;
+      font-weight: 650;
+      color: var(--gray-600);
+      margin-top: 7px;
+      line-height: 1.25;
+    }
+
+    .lifecycle-10-step.in-progress .lifecycle-10-label {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .lifecycle-10-status {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      margin-top: 2px;
+    }
+
+    .lifecycle-10-step.completed .lifecycle-10-status {
+      color: var(--accent);
+    }
+    .lifecycle-10-step.in-progress .lifecycle-10-status {
+      color: var(--primary);
+    }
+    .lifecycle-10-step.upcoming .lifecycle-10-status {
+      color: var(--gray-400);
+    }
+
+    /* ── 2-Column Responsive Dashboard Grid ── */
+    .workspace-dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .workspace-col {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    @media (max-width: 992px) {
+      .workspace-dashboard-grid {
+        grid-template-columns: 1fr;
       }
-      checkIndustryAuth();
-      window.addEventListener('pageshow', function () {
-        checkIndustryAuth();
-      });
-    })();
-  </script>
+    }
+
+    /* Health Matrix */
+    .health-matrix {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+      gap: 10px;
+    }
+
+    .health-item {
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .health-item:hover {
+      background: white;
+      border-color: var(--primary-200);
+      transform: translateY(-1px);
+    }
+
+    .health-label {
+      font-size: 11.5px;
+      font-weight: 650;
+      color: var(--gray-600);
+    }
+
+    .health-status {
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Progress Breakdown */
+    .progress-breakdown-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .progress-breakdown-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .progress-breakdown-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--gray-700);
+    }
+
+    /* Contribution Cards */
+    .contribution-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+    }
+
+    .contribution-card {
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .contribution-card:hover {
+      background: white;
+      border-color: var(--primary-200);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .contribution-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .contribution-title {
+      font-size: 13px;
+      font-weight: 750;
+      color: var(--gray-900);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .contribution-val {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+
+    .contribution-desc {
+      font-size: 12px;
+      color: var(--gray-600);
+      line-height: 1.4;
+    }
+
+    /* Milestone Timeline */
+    .milestone-roadmap {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .milestone-item {
+      padding: 14px 16px;
+      background: #fafbfc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .milestone-item.completed {
+      border-left: 4px solid var(--accent);
+      background: white;
+    }
+
+    .milestone-item.in-progress {
+      border-left: 4px solid var(--primary);
+      background: #f0f7ff;
+    }
+
+    .milestone-item.pending {
+      border-left: 4px solid var(--gray-300);
+    }
+
+    .milestone-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .milestone-title-text {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+
+    .milestone-dates {
+      font-size: 11.5px;
+      color: var(--gray-500);
+      margin-bottom: 6px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Prototype Feature Chips */
+    .prototype-features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin: 14px 0;
+    }
+
+    .prototype-feature-chip {
+      padding: 10px 14px;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 12.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prototype-feature-chip.done {
+      border-color: #a7f3d0;
+      background: #f0fdf4;
+      color: #065f46;
+    }
+
+    .prototype-feature-chip.pending {
+      border-color: #fde68a;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    /* Interactive Field Testing Checklist */
+    .field-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .field-checklist-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .field-checklist-item:hover {
+      background: white;
+      border-color: var(--primary-200);
+    }
+
+    .field-checklist-item.checked {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+
+    .field-checklist-item.checked span.task-text {
+      text-decoration: line-through;
+      color: var(--gray-500);
+    }
+
+    .field-checklist-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Upcoming Actions */
+    .actions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .action-item-card {
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Activity Feed Compact */
+    .activity-feed-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .activity-feed-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .activity-feed-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .activity-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--primary-50);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    /* Team Profile Cards */
+    .team-member-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #fafbfc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      transition: all var(--transition-fast);
+    }
+
+    .team-member-box:hover {
+      background: white;
+      border-color: var(--primary-200);
+      transform: translateY(-1px);
+    }
+
+    /* Discussion stream */
+    .discussion-stream {
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 14px;
+      background: #fafbfc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .discussion-msg-item {
+      display: flex;
+      flex-direction: column;
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    .discussion-msg-item.industry {
+      align-self: flex-end;
+      background: var(--primary);
+      color: white;
+      border-bottom-right-radius: 2px;
+    }
+
+    .discussion-msg-item.university {
+      align-self: flex-start;
+      background: white;
+      border: 1px solid var(--gray-200);
+      color: var(--gray-800);
+      border-bottom-left-radius: 2px;
+    }
+
+    /* Expected Impact Banner */
+    .expected-impact-banner {
+      background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+      border: 1.5px solid #bfdbfe;
+      border-radius: var(--radius-xl);
+      padding: 22px 26px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ── Industry Impact & Analytics Styles ── */
+    .impact-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding-bottom: 40px;
+      width: 100%;
+    }
+
+    .impact-top-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 4px;
+    }
+
+    .impact-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--gray-900);
+      letter-spacing: -0.5px;
+    }
+
+    .impact-subtitle {
+      font-size: 13.5px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* Proper Responsive KPI Grid: 4 on Desktop, 2 on Tablet, 1 on Mobile */
+    .impact-kpi-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: 18px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    @media (max-width: 1024px) {
+      .impact-kpi-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px !important;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .impact-kpi-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+      }
+    }
+
+    .impact-kpi-card {
+      background: #ffffff !important;
+      border: 1px solid var(--gray-200) !important;
+      border-radius: 16px !important;
+      padding: 24px 20px !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+      min-height: 155px !important;
+      box-sizing: border-box !important;
+      width: 100% !important;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+    }
+
+    .impact-kpi-card:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: var(--shadow-md) !important;
+      border-color: var(--gray-300) !important;
+    }
+
+    .impact-kpi-icon, .kpi-icon {
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 12px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-size: 20px !important;
+      flex-shrink: 0 !important;
+    }
+
+    .impact-kpi-val, .kpi-value {
+      font-size: 32px !important;
+      font-weight: 850 !important;
+      color: var(--gray-900) !important;
+      line-height: 1.1 !important;
+      margin-top: 16px !important;
+      letter-spacing: -0.5px !important;
+    }
+
+    .impact-kpi-lbl, .kpi-label {
+      font-size: 13.5px !important;
+      color: var(--gray-600) !important;
+      font-weight: 600 !important;
+      margin-top: 4px !important;
+      line-height: 1.3 !important;
+      letter-spacing: normal !important;
+    }
+
+    /* Transformation Flow */
+    .flow-steps-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      position: relative;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .flow-steps-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .flow-step-box {
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .flow-step-badge {
+      font-size: 10.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .flow-step-text {
+      font-size: 12.5px;
+      color: var(--gray-700);
+      line-height: 1.5;
+    }
+
+    /* Before vs After */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .comparison-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .comparison-header {
+      padding: 14px 18px;
+      font-weight: 750;
+      font-size: 14px;
+      color: var(--gray-900);
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .comparison-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .comparison-col-before {
+      padding: 16px 18px;
+      background: #fff5f5;
+      border-right: 1px solid #fed7d7;
+      font-size: 12.5px;
+      color: #9b2c2c;
+    }
+
+    .comparison-col-after {
+      padding: 16px 18px;
+      background: #f0fdf4;
+      font-size: 12.5px;
+      color: #166534;
+    }
+
+    .district-impact-card {
+      padding: 16px 18px;
+      background: #f8fafc;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      transition: all 0.2s ease;
+    }
+
+    .district-impact-card:hover {
+      border-color: var(--primary-200);
+      background: white;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Print styling for Impact Report */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #impactReportPrintArea, #impactReportPrintArea * {
+        visibility: visible;
+      }
+      #impactReportPrintArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        background: white;
+      }
+      .modal-close, .modal-footer {
+        display: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
 <div class="dashboard-layout">
@@ -64,6 +1671,10 @@
       <a class="sidebar-link" id="nav-collaborations" onclick="showSection('collaborations')">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         <span class="sidebar-link-text">Collaborations</span>
+      </a>
+      <a class="sidebar-link" id="nav-impact" onclick="showSection('impact')">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span class="sidebar-link-text">Impact & Analytics</span>
       </a>
       <a class="sidebar-link" id="nav-notifications" onclick="showSection('notifications')">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
@@ -183,10 +1794,47 @@
         <div id="indChallengesGrid" style="display:flex;flex-direction:column;gap:16px"></div>
       </div>
 
+      <!-- ── CHALLENGE DETAILS ── -->
+      <div id="section-challenge-details" class="dashboard-section" style="display:none">
+        <div id="challengeDetailsContainer" class="challenge-details-container">
+          <!-- Populated dynamically by openChallengeDetails() -->
+        </div>
+      </div>
+
       <!-- ── COLLABORATIONS ── -->
       <div id="section-collaborations" class="dashboard-section" style="display:none">
         <div style="margin-bottom:24px"><h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">My Collaborations</h2><div style="font-size:13px;color:var(--gray-400)">Projects your organization has partnered with or funded</div></div>
+        
+        <!-- Pending Collaboration Requests (from localStorage) -->
+        <div id="pendingCollabSection" style="margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+            <span style="font-size:18px">⏳</span>
+            <h3 style="font-size:17px;font-weight:750;color:var(--gray-900);margin:0">Pending Collaboration Requests</h3>
+            <span class="badge" id="pendingRequestsCountBadge" style="background:#fef3c7;color:#92400e;border-color:#fde68a">0 Pending</span>
+          </div>
+          <div id="pendingCollabList" style="display:flex;flex-direction:column;gap:12px"></div>
+        </div>
+
+        <!-- Active Partnerships -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+          <span style="font-size:18px">🤝</span>
+          <h3 style="font-size:17px;font-weight:750;color:var(--gray-900);margin:0">Active Partnerships</h3>
+        </div>
         <div id="collabList" style="display:flex;flex-direction:column;gap:16px"></div>
+      </div>
+
+      <!-- ── PROJECT COLLABORATION WORKSPACE ── -->
+      <div id="section-project-workspace" class="dashboard-section" style="display:none">
+        <div id="projectWorkspaceContainer" class="workspace-container">
+          <!-- Populated dynamically by renderProjectWorkspace() -->
+        </div>
+      </div>
+
+      <!-- ── INDUSTRY IMPACT & ANALYTICS ── -->
+      <div id="section-impact" class="dashboard-section" style="display:none">
+        <div id="impactAnalyticsContainer" class="impact-container">
+          <!-- Populated dynamically by renderImpactAnalytics() -->
+        </div>
       </div>
 
       <!-- ── NOTIFICATIONS ── -->
@@ -197,11 +1845,314 @@
 
       <!-- ── PROFILE ── -->
       <div id="section-profile" class="dashboard-section" style="display:none">
-        <div style="max-width:700px;margin:0 auto">
-          <h2 style="font-size:22px;font-weight:800;color:var(--gray-900);margin-bottom:24px">Partner Profile</h2>
-          <div class="card" id="indProfileCard">
-            <div class="card-body"><div class="skeleton skeleton-card" style="height:200px"></div></div>
+        <div class="profile-container">
+          
+          <!-- Page Header -->
+          <div class="profile-page-header">
+            <div>
+              <div class="profile-page-title">Partner Profile</div>
+              <div class="profile-page-subtitle">Manage your organization's expertise, capabilities and collaboration preferences.</div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <button type="button" class="btn btn-ghost" onclick="cancelProfileEdit()">Cancel</button>
+              <button type="button" class="btn btn-primary" onclick="saveIndustryProfile()" style="display:flex;align-items:center;gap:7px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Profile
+              </button>
+            </div>
           </div>
+
+          <!-- Hero Identity Card -->
+          <div class="profile-identity-card">
+            <div class="profile-identity-main">
+              <div class="profile-avatar-box" id="identityAvatar">🏭</div>
+              <div>
+                <div class="profile-identity-name" id="identityCompanyName">Organization Name</div>
+                <div class="profile-identity-meta">
+                  <span class="badge badge-assigned" id="identityIndustryType">Industry</span>
+                  <span>•</span>
+                  <span id="identityLocation" style="display:inline-flex;align-items:center;gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span>Jharkhand</span>
+                  </span>
+                  <span>•</span>
+                  <span class="badge badge-resolved" style="background:var(--accent-50);color:var(--accent);border-color:var(--accent-100)">✓ Verified Partner</span>
+                </div>
+                <div class="profile-identity-desc" id="identityDescription">
+                  Supporting higher education institutions and innovators in Jharkhand through corporate social responsibility, mentorship programs, student funding, and direct deployment partnerships.
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Completion Progress -->
+            <div class="profile-completion-card">
+              <div class="completion-header">
+                <span>Profile Completion</span>
+                <span class="completion-percent-text" id="identityCompletionText">0%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="identityProgressBar" style="width: 0%"></div>
+              </div>
+              <div class="completion-subtext" id="identityCompletionHint">Complete all sections for AI matching</div>
+            </div>
+          </div>
+
+          <!-- Section 1: Organization Information -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <div>
+                <div class="profile-section-title">
+                  <span style="font-size:18px">🏢</span> Organization Information
+                </div>
+                <div class="profile-section-subtitle">Basic details and public profile information about your enterprise</div>
+              </div>
+            </div>
+            <div class="profile-section-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="profCompanyName">Organization / Company Name <span class="required">*</span></label>
+                  <input type="text" id="profCompanyName" class="form-control" placeholder="e.g., Tata Steel Foundation or ABC Technologies" oninput="onProfileFieldChange()">
+                  <div class="form-error" id="errCompanyName" style="display:none">Organization name is required</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="profIndustryType">Industry Type <span class="required">*</span></label>
+                  <select id="profIndustryType" class="form-control" onchange="onProfileFieldChange()">
+                    <option value="">Select Industry Type</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Agriculture">Agriculture</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Energy">Energy</option>
+                    <option value="Infrastructure">Infrastructure</option>
+                    <option value="Finance">Finance</option>
+                    <option value="IT Services">IT Services</option>
+                    <option value="MSME">MSME</option>
+                    <option value="Startup">Startup</option>
+                    <option value="CSR Organization">CSR Organization</option>
+                    <option value="Research & Innovation">Research & Innovation</option>
+                  </select>
+                  <div class="form-error" id="errIndustryType" style="display:none">Please select an industry type</div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="profLocation">Operational Base / Location <span class="required">*</span></label>
+                  <input type="text" id="profLocation" class="form-control" placeholder="e.g., Ranchi, Jharkhand" oninput="onProfileFieldChange()">
+                  <div class="form-error" id="errLocation" style="display:none">Location is required</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="profWebsite">Official Website</label>
+                  <input type="url" id="profWebsite" class="form-control" placeholder="https://example.com" oninput="onProfileFieldChange()">
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0">
+                <label class="form-label" for="profDescription">Organization Description <span class="required">*</span></label>
+                <textarea id="profDescription" class="form-control" rows="3" placeholder="Briefly describe your company's core focus, societal mission, and how you engage with regional innovators..." oninput="onProfileFieldChange()"></textarea>
+                <div class="form-error" id="errDescription" style="display:none">Please provide a brief description</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Technical Expertise -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <div>
+                <div class="profile-section-title">
+                  <span style="font-size:18px">💡</span> Technical Expertise
+                </div>
+                <div class="profile-section-subtitle">Select the areas in which your organization has technical expertise</div>
+              </div>
+            </div>
+            <div class="profile-section-body">
+              <div class="tags-container" id="expertiseTagsContainer">
+                <!-- Dynamic active tags rendered here -->
+              </div>
+
+              <div style="display:flex;gap:10px;margin-bottom:18px;max-width:520px">
+                <input type="text" id="customExpertiseInput" class="form-control" placeholder="Add custom skill / domain..." onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomExpertise();}">
+                <button type="button" class="btn btn-primary" onclick="addCustomExpertise()" style="white-space:nowrap;display:flex;align-items:center;gap:6px">
+                  <span>+</span> Add Expertise
+                </button>
+              </div>
+
+              <div class="suggestion-label">Suggested Technical Areas (Click to add):</div>
+              <div class="suggestions-container" id="suggestedExpertiseContainer">
+                <!-- Suggested chips rendered here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Collaboration Capabilities -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <div>
+                <div class="profile-section-title">
+                  <span style="font-size:18px">🤝</span> Collaboration Capabilities
+                </div>
+                <div class="profile-section-subtitle">How can your organization contribute? Select all that apply</div>
+              </div>
+            </div>
+            <div class="profile-section-body">
+              <div class="selectable-grid" id="capabilitiesGrid">
+                <!-- 11 Selectable Capability Cards -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Funding & Resources -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <div>
+                <div class="profile-section-title">
+                  <span style="font-size:18px">💰</span> Available Resources
+                </div>
+                <div class="profile-section-subtitle">Specify operational resource capacity for AI matching with university projects</div>
+              </div>
+            </div>
+            <div class="profile-section-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="resFundingCapacity">Funding / Grant Capacity</label>
+                  <select id="resFundingCapacity" class="form-control" onchange="onProfileFieldChange()">
+                    <option value="Not Available">Not Available</option>
+                    <option value="Up to ₹1 Lakh">Up to ₹1 Lakh</option>
+                    <option value="₹1–5 Lakh">₹1–5 Lakh</option>
+                    <option value="₹5–10 Lakh">₹5–10 Lakh</option>
+                    <option value="₹10–50 Lakh">₹10–50 Lakh</option>
+                    <option value="₹50 Lakh+">₹50 Lakh+</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="resPrototypingCapability">Prototyping Capability</label>
+                  <select id="resPrototypingCapability" class="form-control" onchange="onProfileFieldChange()">
+                    <option value="None">None</option>
+                    <option value="Basic">Basic (Lab / Workshop support)</option>
+                    <option value="Intermediate">Intermediate (Custom fabrication & toolkits)</option>
+                    <option value="Advanced">Advanced (Full engineering, CNC, cleanrooms)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row" style="margin-bottom:0">
+                <div class="form-group">
+                  <label class="form-label" for="resFieldTestingCapability">Field Testing Capability</label>
+                  <select id="resFieldTestingCapability" class="form-control" onchange="onProfileFieldChange()">
+                    <option value="No">No</option>
+                    <option value="Limited">Limited (Selected sites / conditional)</option>
+                    <option value="Yes">Yes (Full industrial / field testing grounds)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="resDeploymentCapability">Deployment Capability</label>
+                  <select id="resDeploymentCapability" class="form-control" onchange="onProfileFieldChange()">
+                    <option value="No">No</option>
+                    <option value="Limited">Limited (Pilot assistance)</option>
+                    <option value="Yes">Yes (Enterprise rollout & supply chain)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 16px;background:var(--primary-50);border-radius:var(--radius-md);border:1px solid var(--primary-100)">
+                <span style="font-size:16px">ℹ️</span>
+                <span style="font-size:12.5px;color:var(--primary-dark);line-height:1.5">
+                  <strong>Resource Matching Guarantee:</strong> These parameters are solely used to intelligently align your organization with appropriate challenge scales. No financial billing or payments are executed here.
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 5: CSR & Social Impact Focus -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <div>
+                <div class="profile-section-title">
+                  <span style="font-size:18px">🌱</span> CSR & Social Impact Focus
+                </div>
+                <div class="profile-section-subtitle">Select the societal areas your organization is interested in supporting</div>
+              </div>
+            </div>
+            <div class="profile-section-body">
+              <div class="pills-grid" id="csrFocusGrid">
+                <!-- CSR Focus Pills -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 6: Geographic Preference -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <div>
+                <div class="profile-section-title">
+                  <span style="font-size:18px">📍</span> Preferred Collaboration Locations
+                </div>
+                <div class="profile-section-subtitle">Define the geographic boundary for on-ground project partnerships</div>
+              </div>
+            </div>
+            <div class="profile-section-body">
+              <div class="radio-grid" id="geographicPrefGrid">
+                <!-- Anywhere in Jharkhand, Selected Districts, Remote / Online, On-site only, Hybrid -->
+              </div>
+
+              <!-- Conditional District Selector -->
+              <div class="districts-box" id="districtsContainer" style="display:none">
+                <div class="districts-header">
+                  <div><strong>Select Jharkhand Districts:</strong> (<span id="districtCount">0</span> selected)</div>
+                  <div style="display:flex;gap:8px">
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleAllDistricts(true)">Select All</button>
+                    <button type="button" class="btn btn-sm btn-ghost" onclick="toggleAllDistricts(false)">Clear</button>
+                  </div>
+                </div>
+                <div class="pills-grid" id="districtsGrid">
+                  <!-- 24 Districts -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 7: Collaboration Preferences -->
+          <div class="profile-section-card">
+            <div class="profile-section-header">
+              <div>
+                <div class="profile-section-title">
+                  <span style="font-size:18px">🎯</span> Collaboration Preferences
+                </div>
+                <div class="profile-section-subtitle">Set your organization's criteria for partner types and maturity stages</div>
+              </div>
+            </div>
+            <div class="profile-section-body">
+              <div style="margin-bottom:20px">
+                <label class="form-label" style="margin-bottom:10px">Preferred Partner Types</label>
+                <div class="selectable-grid" id="preferredPartnersGrid">
+                  <!-- Universities, Startups, MSMEs, etc. -->
+                </div>
+              </div>
+
+              <div>
+                <label class="form-label" style="margin-bottom:10px">Preferred Project Maturity Stages</label>
+                <div class="selectable-grid" id="preferredStagesGrid">
+                  <!-- Research, Ideation, Prototype, Pilot Testing, Deployment, Scale-up -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Action Bar -->
+          <div class="profile-actions-bar">
+            <div class="ai-badge-note">
+              <span class="ai-badge-icon">AI Ready</span>
+              <span>Profile data is formatted for automated match scoring against regional problem statements.</span>
+            </div>
+            <div style="display:flex;gap:12px">
+              <button type="button" class="btn btn-ghost" onclick="cancelProfileEdit()">Reset</button>
+              <button type="button" class="btn btn-primary" onclick="saveIndustryProfile()" style="display:flex;align-items:center;gap:8px;padding:10px 24px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Profile
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -209,32 +2160,558 @@
   </main>
 </div>
 
-<!-- Partner Interest Modal -->
+<!-- Collaborate on this Challenge Modal -->
 <div class="modal-overlay" id="partnerModal">
-  <div class="modal" style="max-width:500px">
-    <div class="modal-header">
-      <div class="modal-title">Express Interest / Partner</div>
+  <div class="modal" style="max-width:680px;border-radius:var(--radius-xl);overflow:hidden">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Collaborate on this Challenge</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Tell the university how your organization can contribute.</div>
+      </div>
       <button class="modal-close" onclick="closeModal('partnerModal')">✕</button>
     </div>
-    <div class="modal-body">
-      <div id="partnerProjectTitle" style="font-weight:700;font-size:15px;color:var(--gray-900);margin-bottom:16px"></div>
+    <div class="collab-modal-body">
+      <!-- Challenge Summary banner -->
+      <div style="padding:12px 16px;background:var(--primary-50);border-radius:var(--radius-md);border:1px solid var(--primary-100);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px" id="collabModalChallengeId">CHALLENGE</div>
+          <div style="font-size:14px;font-weight:750;color:var(--gray-900);margin-top:2px" id="partnerProjectTitle">Challenge Title</div>
+        </div>
+        <div id="collabModalUniversity" style="font-size:12px;color:var(--gray-600);background:white;padding:4px 10px;border-radius:var(--radius-full);border:1px solid var(--gray-200);font-weight:600">HEI Partner</div>
+      </div>
+
+      <!-- STEP 1: Select Contribution -->
+      <div class="collab-step-title">
+        <span class="collab-step-num">1</span>
+        <span>Select Your Organization's Contribution <span style="color:var(--danger)">*</span></span>
+      </div>
+      <div style="font-size:12px;color:var(--gray-500);margin-bottom:10px">Choose at least one way your enterprise wishes to collaborate:</div>
+      <div class="collab-card-grid" id="modalContributionGrid">
+        <!-- 9 Selectable Contribution Cards rendered by JS -->
+      </div>
+      <div class="form-error" id="errContributions" style="display:none;margin-bottom:14px">Please select at least one contribution type</div>
+
+      <!-- STEP 2: Funding Details (Conditional) -->
+      <div id="conditionalFundingPanel" class="conditional-panel" style="display:none">
+        <div class="collab-step-title" style="margin-bottom:6px">
+          <span class="collab-step-num">2</span>
+          <span>Funding & CSR Allocation</span>
+        </div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">Specify the proposed grant scale and instrument (proposal only, no payment transaction):</div>
+        <div class="form-row" style="margin-bottom:0">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="collabFundingAmount">Proposed Funding Amount (₹) <span class="required">*</span></label>
+            <input type="number" id="collabFundingAmount" class="form-control" placeholder="e.g. 250000" min="1000" step="5000">
+            <div class="form-error" id="errFundingAmount" style="display:none">Please enter a valid funding amount</div>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" for="collabFundingType">Funding Type</label>
+            <select id="collabFundingType" class="form-control">
+              <option value="CSR">CSR Innovation Grant</option>
+              <option value="Direct Project Funding">Direct Project Funding</option>
+              <option value="Sponsorship">Student & Lab Sponsorship</option>
+              <option value="Equipment Support">Equipment & Hardware Support</option>
+              <option value="Other">Other Institutional Grant</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Mentorship Details (Conditional) -->
+      <div id="conditionalMentorshipPanel" class="conditional-panel" style="display:none">
+        <div class="collab-step-title" style="margin-bottom:6px">
+          <span class="collab-step-num">3</span>
+          <span>Mentor Expertise Areas</span>
+        </div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:10px">Select domain areas where your mentors will provide guidance:</div>
+        <div class="pills-grid" id="modalMentorshipPills">
+          <!-- Mentorship expertise pills rendered by JS -->
+        </div>
+      </div>
+
+      <!-- STEP 4: Collaboration Message -->
+      <div class="collab-step-title">
+        <span class="collab-step-num">4</span>
+        <span>Message to University <span style="color:var(--danger)">*</span></span>
+      </div>
+      <div class="form-group" style="margin-bottom:18px">
+        <textarea class="form-control" id="partnerMessage" rows="3" placeholder="Explain how your organization can support this project, available testbeds/facilities, or expectations for the partnership..."></textarea>
+        <div class="form-error" id="errPartnerMessage" style="display:none">Please provide a collaboration message</div>
+      </div>
+
+      <!-- STEP 5: Expected Timeline -->
+      <div class="collab-step-title">
+        <span class="collab-step-num">5</span>
+        <span>Expected Collaboration Duration</span>
+      </div>
+      <div class="duration-pills-grid" id="modalDurationGrid">
+        <!-- Duration pills: < 1 Month, 1–3 Months, 3–6 Months, 6–12 Months, 12+ Months -->
+      </div>
+
+      <!-- STEP 6: Contact Person -->
+      <div class="collab-step-title">
+        <span class="collab-step-num">6</span>
+        <span>Industry Contact Representative</span>
+      </div>
+      <div class="form-row" style="margin-bottom:10px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="collabContactName">Contact Name <span class="required">*</span></label>
+          <input type="text" id="collabContactName" class="form-control" placeholder="Contact Representative">
+          <div class="form-error" id="errContactName" style="display:none">Contact name is required</div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="collabContactDesignation">Designation</label>
+          <input type="text" id="collabContactDesignation" class="form-control" placeholder="e.g. CSR Lead / VP Tech">
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="collabContactEmail">Work Email <span class="required">*</span></label>
+          <input type="email" id="collabContactEmail" class="form-control" placeholder="email@company.com">
+          <div class="form-error" id="errContactEmail" style="display:none">Valid email is required</div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" for="collabContactPhone">Phone Number</label>
+          <input type="tel" id="collabContactPhone" class="form-control" placeholder="e.g. 9876543210">
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:12px;color:var(--gray-500)">Saved to industryCollaborationRequests</div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeModal('partnerModal')" class="btn btn-ghost">Cancel</button>
+        <button onclick="submitPartnerInterest()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+          <span>📨</span> Send Collaboration Request
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Update Project Progress -->
+<div class="modal-overlay" id="updateProgressModal">
+  <div class="modal-container" style="max-width:560px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Update Project Progress & Stage</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Update the current lifecycle stage and milestone completion percentage.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('updateProgressModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:22px 24px">
       <div class="form-group">
-        <label class="form-label">Type of Support</label>
-        <select class="form-control" id="partnerType">
-          <option value="mentorship">Technical Mentorship & Guidance</option>
-          <option value="funding">CSR Grant / Direct Funding</option>
-          <option value="pilot">Pilot Testing / Field Deployment</option>
-          <option value="incubation">Startup Incubation & Acceleration</option>
+        <label class="form-label" for="progLifecycleStage">Current Lifecycle Stage <span class="required">*</span></label>
+        <select id="progLifecycleStage" class="form-control">
+          <option value="Problem Identified">1. Problem Identified</option>
+          <option value="University Assigned">2. University Assigned</option>
+          <option value="Solution Proposal">3. Solution Proposal</option>
+          <option value="Industry Collaboration">4. Industry Collaboration</option>
+          <option value="Prototype Development">5. Prototype Development</option>
+          <option value="Field Testing">6. Field Testing</option>
+          <option value="Community Feedback">7. Community Feedback</option>
+          <option value="Improvement">8. Improvement</option>
+          <option value="Deployment">9. Deployment</option>
+          <option value="Impact Tracking">10. Impact Tracking</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Message / Proposal</label>
-        <textarea class="form-control" id="partnerMessage" rows="4" placeholder="How would your organization like to support this project?"></textarea>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <label class="form-label" for="progPercentInput" style="margin-bottom:0">Overall Progress Completion (%) <span class="required">*</span></label>
+          <span id="progPercentVal" style="font-weight:800;font-size:15px;color:var(--primary)">65%</span>
+        </div>
+        <input type="range" id="progPercentSlider" min="0" max="100" step="5" value="65" class="form-control" style="cursor:pointer;accent-color:var(--primary);height:8px;padding:0" oninput="document.getElementById('progPercentVal').textContent = this.value + '%'; document.getElementById('progPercentInput').value = this.value">
+        <div style="margin-top:6px;display:flex;align-items:center;gap:10px">
+          <input type="number" id="progPercentInput" min="0" max="100" value="65" class="form-control" style="width:90px" oninput="document.getElementById('progPercentVal').textContent = this.value + '%'; document.getElementById('progPercentSlider').value = this.value">
+          <span style="font-size:12px;color:var(--gray-500)">Enter exact completion percentage (0 - 100%)</span>
+        </div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="progDescription">Update Description / Activity Log Note <span class="required">*</span></label>
+        <textarea id="progDescription" class="form-control" rows="3" placeholder="e.g. Completed telemetry hardware integration and bench trials at 42°C. Starting field deployment prep."></textarea>
+        <div class="form-error" id="errProgDescription" style="display:none">Please provide a brief description of the progress update</div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button onclick="closeModal('partnerModal')" class="btn btn-ghost">Cancel</button>
-      <button onclick="submitPartnerInterest()" class="btn btn-blue">Send Proposal</button>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="closeModal('updateProgressModal')" class="btn btn-ghost">Cancel</button>
+      <button onclick="saveProjectProgress()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+        <span>💾</span> Save Progress
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Update Prototype Status -->
+<div class="modal-overlay" id="updatePrototypeModal">
+  <div class="modal-container" style="max-width:560px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Update Prototype Status</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Log technical versioning, development milestones, and hardware notes.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('updatePrototypeModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:22px 24px">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="protoVersionInput">Prototype Version <span class="required">*</span></label>
+          <input type="text" id="protoVersionInput" class="form-control" placeholder="e.g. Prototype V1.3">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="protoStageSelect">Prototype Stage</label>
+          <select id="protoStageSelect" class="form-control">
+            <option value="Design & Architecture">Design & Architecture</option>
+            <option value="Bench Development">Bench Development</option>
+            <option value="Prototype Assembly">Prototype Assembly</option>
+            <option value="Pilot Prototype">Pilot Prototype</option>
+            <option value="Field Testing">Field Testing</option>
+            <option value="Ready for Deployment">Ready for Deployment</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="protoProgressInput">Technical Readiness Progress (%)</label>
+        <input type="number" id="protoProgressInput" min="0" max="100" class="form-control" placeholder="e.g. 70">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="protoNotesInput">Technical Architecture Notes & Specifications <span class="required">*</span></label>
+        <textarea id="protoNotesInput" class="form-control" rows="4" placeholder="Describe component changes, sensor calibrations, firmware versions, or lab bench observations..."></textarea>
+        <div class="form-error" id="errProtoNotes" style="display:none">Please enter technical notes</div>
+      </div>
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="closeModal('updatePrototypeModal')" class="btn btn-ghost">Cancel</button>
+      <button onclick="savePrototypeStatus()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+        <span>🛠️</span> Update Prototype
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Field Test Result -->
+<div class="modal-overlay" id="addTestResultModal">
+  <div class="modal-container" style="max-width:580px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Log Field Testing Result</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Record on-ground pilot performance, community feedback, and issues.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('addTestResultModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:22px 24px">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="testLocationInput">Testing Location / Hamlet <span class="required">*</span></label>
+          <input type="text" id="testLocationInput" class="form-control" placeholder="e.g. Latehar District, Cluster B">
+          <div class="form-error" id="errTestLocation" style="display:none">Location is required</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="testDateInput">Test Date</label>
+          <input type="date" id="testDateInput" class="form-control">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="testParticipantsInput">Participants / Sample Size</label>
+          <input type="text" id="testParticipantsInput" class="form-control" placeholder="e.g. 50 households / 1 PHC Clinic">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="testSuccessRateInput">Success Rate (%) <span class="required">*</span></label>
+          <input type="number" id="testSuccessRateInput" min="0" max="100" class="form-control" placeholder="e.g. 85">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="testResultSelect">Overall Outcome</label>
+        <select id="testResultSelect" class="form-control">
+          <option value="Completed - Passed">Completed - Passed</option>
+          <option value="Completed - Conditional Pass">Completed - Conditional Pass</option>
+          <option value="Iterating on Issues">Iterating on Issues</option>
+          <option value="Scheduled">Scheduled</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="testIssuesInput">Issues Identified / Remediation</label>
+        <textarea id="testIssuesInput" class="form-control" rows="2" placeholder="e.g. Sensor battery discharge under overcast skies, cable routing needs weatherproofing..."></textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="testFeedbackInput">Community Feedback & Observations</label>
+        <textarea id="testFeedbackInput" class="form-control" rows="2" placeholder="e.g. Positive community reaction to continuous night lighting; villagers requested additional mobile charging node."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="closeModal('addTestResultModal')" class="btn btn-ghost">Cancel</button>
+      <button onclick="saveFieldTestResult()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+        <span>🧪</span> Save Test Result
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Upload Project Document -->
+<div class="modal-overlay" id="uploadDocModal">
+  <div class="modal-container" style="max-width:520px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Upload Project Document</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Attach project agreements, specifications, reports, or test data.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('uploadDocModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:22px 24px">
+      <div class="form-group">
+        <label class="form-label" for="docTitleInput">Document Title <span class="required">*</span></label>
+        <input type="text" id="docTitleInput" class="form-control" placeholder="e.g. Field Trial Phase 1 Telemetry Report">
+        <div class="form-error" id="errDocTitle" style="display:none">Document title is required</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="docTypeSelect">Document Type</label>
+        <select id="docTypeSelect" class="form-control">
+          <option value="Solution Proposal">Solution Proposal</option>
+          <option value="Technical Requirements">Technical Requirements</option>
+          <option value="Prototype Specification">Prototype Specification</option>
+          <option value="Testing Report">Testing Report</option>
+          <option value="Project Agreement">Project Agreement</option>
+          <option value="Field Observation Notes">Field Observation Notes</option>
+          <option value="Other">Other Technical Annexure</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="docUploaderInput">Uploaded By</label>
+        <input type="text" id="docUploaderInput" class="form-control" placeholder="e.g. Industry Technical Lead">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="docFileInput">Select File (PDF, DOCX, XLSX, ZIP)</label>
+        <input type="file" id="docFileInput" class="form-control" style="padding:8px 12px">
+        <div style="font-size:11px;color:var(--gray-400);margin-top:4px">Prototype mode: local selection simulation (persisted in browser storage)</div>
+      </div>
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="closeModal('uploadDocModal')" class="btn btn-ghost">Cancel</button>
+      <button onclick="saveProjectDocument()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+        <span>📎</span> Upload Document
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Generate Impact Report -->
+<div class="modal-overlay" id="impactReportModal">
+  <div class="modal-container" style="max-width:760px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Industry Impact & CSR Audit Report</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Formal social accountability summary for CSR directors and institutional authorities.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('impactReportModal')">✕</button>
+    </div>
+    <div class="modal-body" id="impactReportPrintArea" style="padding:24px;max-height:75vh;overflow-y:auto">
+      <!-- Populated dynamically by generateImpactReport() -->
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:12px;color:var(--gray-500)">Generated via JanSetu Platform • SIH 2026 Problem 26043</div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeModal('impactReportModal')" class="btn btn-ghost">Close</button>
+        <button onclick="printImpactReport()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+          <span>🖨️</span> Print / Save PDF
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Industry Technical Feedback -->
+<div class="modal-overlay" id="addIndustryFeedbackModal">
+  <div class="modal-container" style="max-width:540px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Add Industry Review & Feedback</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Provide industry technical advisory and evaluation for the university project team.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('addIndustryFeedbackModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:22px 24px">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="feedReviewerName">Reviewer Name <span class="required">*</span></label>
+          <input type="text" id="feedReviewerName" class="form-control" value="Vikram Sinha" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="feedReviewerRole">Organization / Role</label>
+          <input type="text" id="feedReviewerRole" class="form-control" value="Industry Mentor & Technical Lead (ABC Technologies)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="feedRatingSelect">Overall Technical Rating <span class="required">*</span></label>
+        <select id="feedRatingSelect" class="form-control">
+          <option value="5">★★★★★ 5/5 - Outstanding Progress</option>
+          <option value="4" selected>★★★★☆ 4/5 - Strong Engineering & Validated Prototype</option>
+          <option value="3">★★★☆☆ 3/5 - Satisfactory with Iterations Required</option>
+          <option value="2">★★☆☆☆ 2/5 - Major Technical Gaps</option>
+          <option value="1">★☆☆☆☆ 1/5 - Unsatisfactory</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="feedCommentText">Technical Feedback & Recommendations <span class="required">*</span></label>
+        <textarea id="feedCommentText" class="form-control" rows="4" placeholder="e.g., The prototype demonstrates promising sensor integration. Improve battery efficiency before field deployment..."></textarea>
+        <div class="form-error" id="errFeedComment" style="display:none">Please enter your feedback comments</div>
+      </div>
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="closeModal('addIndustryFeedbackModal')" class="btn btn-ghost">Cancel</button>
+      <button onclick="submitIndustryFeedback()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+        <span>⭐</span> Submit Feedback
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Post Project Update / Communication -->
+<div class="modal-overlay" id="postProjectUpdateModal">
+  <div class="modal-container" style="max-width:540px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Post Project Update</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Share an update, technical note, or request with the university project team.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('postProjectUpdateModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:22px 24px">
+      <div class="form-group">
+        <label class="form-label" for="updateSenderSelect">Posting As</label>
+        <select id="updateSenderSelect" class="form-control">
+          <option value="Industry Mentor (Vikram Sinha)">Industry Mentor (Vikram Sinha)</option>
+          <option value="Technical Expert (Arjun Mehta)">Technical Expert (Arjun Mehta)</option>
+          <option value="ABC Technologies CSR Desk">ABC Technologies CSR Desk</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="updateMessageText">Message / Discussion Note <span class="required">*</span></label>
+        <textarea id="updateMessageText" class="form-control" rows="3" placeholder="e.g., Please share the updated prototype documentation before the weekly sync."></textarea>
+        <div class="form-error" id="errUpdateMessage" style="display:none">Message text cannot be empty</div>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" for="updateAttachmentName">Attachment Name (Optional)</label>
+        <input type="text" id="updateAttachmentName" class="form-control" placeholder="e.g. telemetry_calibration_spec_v1.pdf">
+        <div style="font-size:11.5px;color:var(--gray-400);margin-top:4px">Prototype mode: local simulated attachment name</div>
+      </div>
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:10px">
+      <button onclick="closeModal('postProjectUpdateModal')" class="btn btn-ghost">Cancel</button>
+      <button onclick="submitProjectUpdate()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+        <span>📨</span> Post Update
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Project Collaboration Status Report -->
+<div class="modal-overlay" id="projectReportModal">
+  <div class="modal-container" style="max-width:800px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Project Collaboration Comprehensive Report</div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">Summary report for university faculty, student leads, and industry CSR directors.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('projectReportModal')">✕</button>
+    </div>
+    <div class="modal-body" id="projectReportPrintArea" style="padding:24px;max-height:75vh;overflow-y:auto">
+      <!-- Populated dynamically by openProjectReportModal() -->
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:12px;color:var(--gray-500)">JanSetu • SIH 2026 Problem 26043</div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeModal('projectReportModal')" class="btn btn-ghost">Close</button>
+        <button onclick="printProjectReport()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+          <span>🖨️</span> Print / Save PDF
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Prototype Telemetry & Live Monitor -->
+<div class="modal-overlay" id="viewPrototypeModal">
+  <div class="modal-container" style="max-width:720px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="modal-title" style="font-size:18px;font-weight:800;color:var(--gray-900)">Smart Irrigation Prototype v1.0 — Live Telemetry</div>
+          <span class="badge badge-assigned" style="font-size:11px">● LIVE STREAM</span>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);margin-top:3px">IoT soil moisture sensing and automated solenoid valve control test bench.</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('viewPrototypeModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:22px 24px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;margin-bottom:18px">
+        <div style="padding:14px;background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);text-align:center">
+          <div style="font-size:11px;font-weight:700;color:var(--gray-500)">SOIL MOISTURE</div>
+          <div style="font-size:22px;font-weight:850;color:#059669;margin-top:4px" id="protoMoistureVal">42%</div>
+          <div style="font-size:11px;color:#059669;margin-top:2px">Optimal Threshold</div>
+        </div>
+        <div style="padding:14px;background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);text-align:center">
+          <div style="font-size:11px;font-weight:700;color:var(--gray-500)">SOIL TEMP</div>
+          <div style="font-size:22px;font-weight:850;color:#1a56db;margin-top:4px">28.4°C</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px">Ambient Ambient</div>
+        </div>
+        <div style="padding:14px;background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);text-align:center">
+          <div style="font-size:11px;font-weight:700;color:var(--gray-500)">VALVE STATUS</div>
+          <div style="font-size:16px;font-weight:850;color:#b45309;margin-top:8px" id="protoValveStatus">CLOSED (Idle)</div>
+          <div style="font-size:11px;color:var(--gray-500);margin-top:2px">Auto-scheduled</div>
+        </div>
+        <div style="padding:14px;background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);text-align:center">
+          <div style="font-size:11px;font-weight:700;color:var(--gray-500)">BATTERY / SOLAR</div>
+          <div style="font-size:22px;font-weight:850;color:#059669;margin-top:4px">88%</div>
+          <div style="font-size:11px;color:#059669;margin-top:2px">Solar Charging</div>
+        </div>
+        <div style="padding:14px;background:#f8fafc;border:1px solid var(--gray-200);border-radius:var(--radius-md);text-align:center">
+          <div style="font-size:11px;font-weight:700;color:var(--gray-500)">LoRaWAN RSSI</div>
+          <div style="font-size:20px;font-weight:850;color:#1a56db;margin-top:4px">-92 dBm</div>
+          <div style="font-size:11px;color:#059669;margin-top:2px">Strong Signal</div>
+        </div>
+      </div>
+
+      <div style="background:#0f172a;color:#e2e8f0;border-radius:var(--radius-md);padding:16px;font-family:monospace;font-size:12px;line-height:1.6;margin-bottom:16px;max-height:160px;overflow-y:auto">
+        <div style="color:#38bdf8">[2026-09-07 16:20:01] Gateway RX: Node 0x7229 - RSSI: -92dBm, SNR: 8.5dB</div>
+        <div style="color:#4ade80">[2026-09-07 16:20:01] Sensor Telemetry: VWC=42.1%, T=28.4C, Batt=4.12V (88%)</div>
+        <div style="color:#facc15">[2026-09-07 16:20:02] Rule Engine: Soil moisture within target range [35% - 55%]. Valve remains CLOSED.</div>
+        <div style="color:#e2e8f0">[2026-09-07 16:20:02] MQTT Publish -> topic "jharkhand/ranchi/irrigation/telemetry" [OK]</div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:12px 16px;border-radius:var(--radius-md);border:1px solid var(--gray-200)">
+        <span style="font-size:13px;font-weight:650;color:var(--gray-700)">Simulate Manual Test Valve Pulse (5 seconds):</span>
+        <button class="btn btn-sm btn-outline-primary" onclick="simulateValvePulse()" id="btnSimValve">
+          ⚡ Trigger Valve Pulse
+        </button>
+      </div>
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:14px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end">
+      <button onclick="closeModal('viewPrototypeModal')" class="btn btn-primary">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Document Viewer Preview -->
+<div class="modal-overlay" id="documentPreviewModal">
+  <div class="modal-container" style="max-width:680px">
+    <div class="modal-header" style="background:#fafbfc;padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+      <div>
+        <div class="modal-title" id="docPreviewModalTitle" style="font-size:18px;font-weight:800;color:var(--gray-900)">Document Viewer</div>
+        <div id="docPreviewModalSub" style="font-size:13px;color:var(--gray-500);margin-top:3px">Project Documentation • JanSetu Repository</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('documentPreviewModal')">✕</button>
+    </div>
+    <div class="modal-body" id="docPreviewModalBody" style="padding:24px;max-height:70vh;overflow-y:auto;font-size:13.5px;color:var(--gray-700);line-height:1.6">
+      <!-- Populated dynamically by viewDocument() -->
+    </div>
+    <div class="modal-footer" style="background:#fafbfc;padding:16px 24px;border-top:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:12px;color:var(--gray-500)">Digital Verification Certified</div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeModal('documentPreviewModal')" class="btn btn-ghost">Close</button>
+        <button onclick="triggerDocDownloadFromModal()" class="btn btn-primary" style="display:flex;align-items:center;gap:6px">
+          <span>⬇️</span> Download File
+        </button>
+      </div>
     </div>
   </div>
 </div>
