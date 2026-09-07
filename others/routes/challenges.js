@@ -5,7 +5,8 @@ const {
   updateStatus, assignChallenge, submitFeedback, deleteChallenge,
   getMyChallenges, getChallengeStats, classifyChallengeText,
   toggleSupport, getPublicFeed, getMapData,
-  checkDuplicates, parseVoice, validateResolution, provideAdditionalInfo
+  checkDuplicates, parseVoice, validateResolution, provideAdditionalInfo,
+  assignIndustryPartner
 } = require('../controllers/challengeController');
 const { protect, optionalAuth } = require('../middleware/auth');
 const { authorize } = require('../middleware/roleCheck');
@@ -27,6 +28,7 @@ router.delete('/:id', optionalAuth, deleteChallenge);
 router.put('/:id/status', protect, authorize('admin', 'university_rep'), updateStatus);
 router.post('/:id/assign', protect, authorize('admin'), assignChallenge);
 router.put('/:id/assign', protect, authorize('admin'), assignChallenge);
+router.post('/:id/assign-industry', protect, authorize('admin'), assignIndustryPartner);
 router.post('/:id/support', protect, toggleSupport);
 router.post('/:id/feedback', protect, authorize('citizen'), submitFeedback);
 router.post('/:id/validate-resolution', protect, authorize('citizen', 'admin'), validateResolution);

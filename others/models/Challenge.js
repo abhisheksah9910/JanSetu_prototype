@@ -5,7 +5,7 @@ const challengeSchema = new mongoose.Schema({
   challengeId: {
     type: String,
     unique: true,
-    default: () => 'JH-' + new Date().getFullYear() + '-' + Math.floor(1000 + Math.random() * 9000)
+    default: () => 'JH-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000)
   },
   title: {
     type: String,
@@ -154,7 +154,8 @@ const challengeSchema = new mongoose.Schema({
     summary: { type: String, default: null },
     citizenVerified: { type: Boolean, default: false },
     citizenFeedback: { type: String, default: null },
-    verifiedAt: { type: Date, default: null }
+    verifiedAt: { type: Date, default: null },
+    verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
   },
   // Need More Info Interactive Workflow
   needMoreInfo: {

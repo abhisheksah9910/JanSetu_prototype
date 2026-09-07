@@ -1,6 +1,7 @@
 const Challenge = require('../models/Challenge');
 const University = require('../models/University');
 const User = require('../models/User');
+const IndustryPartner = require('../models/IndustryPartner');
 const { classifyChallenge, generateTags, suggestPriority, parseVoiceTranscript, findSimilarChallenges } = require('../services/aiClassifier');
 const { notifyChallenge, notifyStatusChange, notifyUniversityAssignment, logActivity } = require('../services/notificationService');
 const path = require('path');
@@ -42,7 +43,13 @@ exports.getChallenges = async (req, res, next) => {
     // Filters
     if (search) query.$text = { $search: search };
     if (category) query.category = category;
-    if (status && status !== 'all') query.status = status;
+    if (status && status !== 'all') {
+      if (status.includes(',')) {
+        query.status = { $in: status.split(',').map(s => s.trim()) };
+      } else {
+        query.status = status;
+      }
+    }
     if (priority) query.priority = priority;
     if (district) query['location.district'] = new RegExp('^' + district.trim() + '$', 'i');
     if (assignedUniversity) query.assignedUniversity = assignedUniversity;
@@ -257,13 +264,16 @@ exports.updateStatus = async (req, res, next) => {
     if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
 
     const validTransitions = {
-      submitted: ['under_review', 'rejected'],
-      under_review: ['validated', 'rejected'],
-      validated: ['assigned', 'rejected'],
-      assigned: ['in_progress', 'rejected'],
-      in_progress: ['testing', 'rejected'],
-      testing: ['resolved', 'in_progress'],
-      resolved: ['closed']
+      submitted: ['under_review', 'validated', 'rejected'],
+      under_review: ['validated', 'rejected', 'submitted'],
+      validated: ['assigned', 'under_review', 'rejected'],
+      assigned: ['in_progress', 'escalated', 'validated', 'rejected'],
+      in_progress: ['testing', 'resolved', 'escalated', 'assigned', 'rejected'],
+      testing: ['resolved', 'in_progress', 'escalated'],
+      escalated: ['assigned', 'in_progress', 'testing', 'resolved', 'closed'],
+      resolved: ['closed', 'in_progress'],
+      closed: ['resolved', 'in_progress'],
+      rejected: ['under_review', 'submitted']
     };
 
     const allowed = validTransitions[challenge.status] || [];
@@ -846,6 +856,58 @@ exports.provideAdditionalInfo = async (req, res, next) => {
       message: 'Additional information successfully submitted to JanSetu!',
       data: challenge
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Assign industry partner to challenge
+// @route   POST /api/challenges/:id/assign-industry
+// @access  Private (Admin)
+exports.assignIndustryPartner = async (req, res, next) => {
+  try {
+    const { partnerId, role, note } = req.body;
+
+    const [challenge, partner] = await Promise.all([
+      Challenge.findById(req.params.id),
+      IndustryPartner.findById(partnerId)
+    ]);
+
+    if (!challenge) return res.status(404).json({ success: false, message: 'Challenge not found' });
+    if (!partner) return res.status(404).json({ success: false, message: 'Industry Partner not found' });
+
+    // Prevent duplicate assignment
+    const alreadyAssigned = challenge.industryCollaborators.some(c => c.partner.toString() === partnerId);
+    if (alreadyAssigned) {
+      return res.status(400).json({ success: false, message: 'Partner is already collaborating on this challenge' });
+    }
+
+    challenge.industryCollaborators.push({
+      partner: partnerId,
+      role: role || 'funder',
+      joinedAt: new Date()
+    });
+
+    challenge.statusHistory.push({
+      status: challenge.status,
+      changedBy: req.user.id,
+      note: note || `Industry Partner ${partner.name} joined as ${role || 'funder'}`
+    });
+
+    await challenge.save();
+
+    // Update partner stats
+    await IndustryPartner.findByIdAndUpdate(partnerId, { $inc: { 'stats.totalCollaborations': 1 } });
+
+    await logActivity({
+      actor: req.user,
+      action: 'challenge_assigned',
+      target: { type: 'Challenge', id: challenge._id, name: challenge.title },
+      description: `Industry partner ${partner.name} joined challenge`,
+      req
+    });
+
+    res.status(200).json({ success: true, message: `Industry Partner ${partner.name} assigned` });
   } catch (error) {
     next(error);
   }

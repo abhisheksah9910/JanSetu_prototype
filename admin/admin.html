@@ -1,451 +1,713 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — InnovateSphere</title>
-  <link rel="stylesheet" href="/css/main.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <link rel="stylesheet" href="/css/components.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JanSetu — Admin Command Center</title>
+  <meta name="description" content="JanSetu Admin Command Center — AI-powered challenge management, matching, and governance platform." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- Immediate Auth Guard & BF-Cache Protection -->
-  <script>
-    (function () {
-      function checkAdminAuth() {
-        var token = localStorage.getItem('is_token') || localStorage.getItem('token');
-        if (!token) {
-          window.location.replace('/login.html');
-          return false;
-        }
-        return true;
-      }
-      checkAdminAuth();
-      window.addEventListener('pageshow', function () {
-        checkAdminAuth();
-      });
-    })();
-  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #002D62; --primary-hover: #001A3A; --primary-light: #EFF6FF; --primary-border: #BFDBFE;
+      --saffron: #FF9933; --saffron-dark: #EA580C; --saffron-light: #FFF7ED;
+      --india-green: #138808; --india-green-hover: #0E6806; --india-green-light: #EDFCF2;
+      --danger: #DC2626; --danger-light: #FEF2F2; --warning: #D97706; --warning-light: #FEF3C7;
+      --navy: #002D62;
+      --gray-900: #111827; --gray-800: #1F2937; --gray-700: #374151; --gray-600: #4B5563;
+      --gray-500: #6B7280; --gray-400: #9CA3AF; --gray-300: #D1D5DB; --gray-200: #E5E7EB;
+      --gray-100: #F3F4F6; --gray-50: #F9FAFB; --white: #FFFFFF;
+      --font-main: 'Inter', sans-serif; --sidebar-w: 272px;
+    }
+    html, body { height: 100%; width: 100%; font-family: var(--font-main); background-color: #f0eee8; color: var(--gray-800); overflow: hidden; -webkit-font-smoothing: antialiased; }
+    .app-layout { display: flex; height: 100vh; width: 100vw; overflow: hidden; position: relative; }
+    .fixed-canvas-bg { position: fixed; top: 0; left: var(--sidebar-w); right: 0; bottom: 0; pointer-events: none; z-index: 0; background-color: #f0eee8; background-image: radial-gradient(ellipse 850px 380px at 85% 30px, rgba(220,38,38,0.09) 0%, transparent 70%), radial-gradient(ellipse 750px 420px at 98% 340px, rgba(0,45,98,0.07) 0%, transparent 65%), linear-gradient(180deg, #f5f2ec 0%, #f0eee8 320px, #eae7df 100%); }
+    /* SIDEBAR */
+    .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); background: var(--white); border-right: 1px solid #e2ddd5; display: flex; flex-direction: column; height: 100vh; z-index: 50; overflow-y: auto; overflow-x: hidden; flex-shrink: 0; }
+    .sidebar::-webkit-scrollbar { width: 4px; } .sidebar::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
+    .sidebar-tricolor { width: 100%; height: 5px; flex-shrink: 0; background: linear-gradient(to right, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%); }
+    .sidebar-brand { padding: 18px 18px 14px; display: flex; align-items: center; gap: 12px; text-decoration: none; border-bottom: 1px solid rgba(0,0,0,0.05); flex-shrink: 0; }
+    .brand-logo { width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #002D62 0%, #1a56db 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,45,98,0.25); }
+    .brand-logo svg { width: 22px; height: 22px; }
+    .brand-title { font-size: 20px; font-weight: 900; color: var(--gray-900); letter-spacing: -0.5px; line-height: 1.1; }
+    .brand-title .bs { color: #FF9933; } .brand-title .bg { color: #138808; }
+    .brand-tag { font-size: 10px; color: var(--gray-500); font-weight: 700; margin-top: 2px; letter-spacing: 0.3px; }
+    .admin-pill { margin: 10px 14px 6px; background: linear-gradient(135deg, #DC2626 0%, #b91c1c 100%); border-radius: 10px; padding: 8px 14px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .admin-pill-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.6); }
+    .admin-pill-text { font-size: 11.5px; font-weight: 800; color: white; }
+    .admin-pill-name { font-size: 11px; color: rgba(255,255,255,0.75); font-weight: 600; margin-left: auto; }
+    .sidebar-menu { padding: 8px 12px; display: flex; flex-direction: column; gap: 2px; flex: 1; }
+    .nav-section-label { font-size: 9.5px; font-weight: 900; color: var(--gray-400); letter-spacing: 1.2px; text-transform: uppercase; padding: 12px 6px 5px; }
+    .nav-item { display: flex; align-items: center; gap: 11px; padding: 9px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--gray-700); text-decoration: none; border: none; background: transparent; width: 100%; text-align: left; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease; }
+    .nav-item:hover { background: #fff9f0; color: var(--gray-900); }
+    .nav-item.active { background: var(--primary-light); color: var(--navy); font-weight: 800; border-left: 3px solid #FF9933; }
+    .nav-item svg { width: 17px; height: 17px; stroke: var(--gray-400); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; transition: stroke 0.15s; }
+    .nav-item:hover svg { stroke: #FF9933; } .nav-item.active svg { stroke: var(--navy); }
+    .nav-badge { margin-left: auto; background: #FF9933; color: white; font-size: 10px; font-weight: 800; padding: 1px 7px; border-radius: 20px; min-width: 20px; text-align: center; }
+    .nav-badge.red { background: var(--danger); }
+    .sidebar-footer { padding: 12px 14px 14px; border-top: 1px solid rgba(0,0,0,0.06); flex-shrink: 0; }
+    .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: var(--gray-50); margin-bottom: 6px; }
+    .sidebar-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #DC2626, #f87171); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; flex-shrink: 0; }
+    .sidebar-uname { font-size: 13px; font-weight: 700; color: var(--gray-800); }
+    .sidebar-urole { font-size: 10.5px; color: var(--gray-400); }
+    .btn-logout { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; font-size: 12.5px; font-weight: 700; color: var(--danger); border: none; background: transparent; width: 100%; cursor: pointer; transition: background-color 0.15s; }
+    .btn-logout:hover { background: var(--danger-light); }
+    .btn-logout svg { width: 16px; height: 16px; stroke: var(--danger); stroke-width: 2; fill: none; }
+    /* MAIN */
+    .main-viewport { flex: 1; height: 100vh; display: flex; flex-direction: column; overflow-y: auto; overflow-x: hidden; position: relative; z-index: 1; scroll-behavior: smooth; }
+    .main-viewport::-webkit-scrollbar { width: 7px; } .main-viewport::-webkit-scrollbar-thumb { background: #ccc7be; border-radius: 4px; }
+    /* TOPBAR */
+    .top-header { position: sticky; top: 0; z-index: 40; background: rgba(240,238,232,0.92); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.07); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; flex-shrink: 0; }
+    .topbar-title { font-size: 17px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.3px; }
+    .topbar-breadcrumb { font-size: 11.5px; color: var(--gray-500); margin-top: 1px; }
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .topbar-admin-badge { display: flex; align-items: center; gap: 7px; padding: 5px 14px; background: var(--danger); border-radius: 99px; font-size: 11.5px; font-weight: 700; color: white; }
+    .topbar-notif { position: relative; width: 36px; height: 36px; border-radius: 10px; background: white; border: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s; border: none; }
+    .topbar-notif:hover { background: var(--gray-50); }
+    .topbar-notif svg { width: 17px; height: 17px; stroke: var(--gray-700); stroke-width: 2; fill: none; }
+    .notif-dot { position: absolute; top: -3px; right: -3px; width: 16px; height: 16px; border-radius: 50%; background: #FF9933; color: white; font-size: 9px; font-weight: 800; display: flex; align-items: center; justify-content: center; border: 2px solid #f0eee8; }
+    .topbar-user { display: flex; align-items: center; gap: 8px; padding: 4px 14px 4px 4px; background: white; border: 1px solid var(--gray-200); border-radius: 99px; cursor: pointer; }
+    .topbar-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #DC2626, #f87171); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; }
+    .topbar-uname { font-size: 12.5px; font-weight: 700; color: var(--gray-800); }
+    /* SECTIONS */
+    .page-content { padding: 28px 32px 56px; position: relative; z-index: 1; }
+    .dashboard-section { display: none; animation: fadeInUp 0.25s ease; }
+    .dashboard-section.active { display: block; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    /* WELCOME BANNER */
+    .welcome-banner { border-radius: 20px; padding: 28px 32px; margin-bottom: 24px; position: relative; overflow: hidden; background: linear-gradient(135deg, #002D62 0%, #1a3a6e 50%, #0e2a5c 100%); box-shadow: 0 8px 32px rgba(0,45,98,0.28); }
+    .wb-pattern { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(circle at 80% 50%, rgba(255,153,51,0.15) 0%, transparent 60%), radial-gradient(circle at 20% 80%, rgba(19,136,8,0.12) 0%, transparent 50%); }
+    .wb-ribbon { position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(to right, #FF9933 33.33%, #fff 33.33%, #fff 66.66%, #138808 66.66%); }
+    .wb-content { position: relative; z-index: 2; }
+    .wb-greeting { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .wb-title { font-size: 26px; font-weight: 900; color: white; letter-spacing: -0.5px; margin-bottom: 6px; }
+    .wb-desc { font-size: 13.5px; color: rgba(255,255,255,0.7); line-height: 1.6; max-width: 600px; margin-bottom: 20px; }
+    .wb-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-wb { display: inline-flex; align-items: center; gap: 7px; border: none; border-radius: 12px; padding: 10px 20px; font-size: 13px; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+    .btn-wb-saffron { background: #FF9933; color: white; box-shadow: 0 4px 14px rgba(255,153,51,0.4); }
+    .btn-wb-saffron:hover { background: #e68a22; transform: translateY(-1px); }
+    .btn-wb-ghost { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.25); }
+    .btn-wb-ghost:hover { background: rgba(255,255,255,0.18); }
+    /* METRICS */
+    .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .metric-card { background: white; border-radius: 16px; padding: 20px 22px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 10px rgba(0,0,0,0.04); transition: box-shadow 0.2s, transform 0.2s; }
+    .metric-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    .metric-card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .metric-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .metric-trend { font-size: 11px; font-weight: 700; color: var(--india-green); }
+    .metric-trend.warn { color: var(--warning); }
+    .metric-val { font-size: 30px; font-weight: 900; color: var(--gray-900); letter-spacing: -1px; line-height: 1; }
+    .metric-lbl { font-size: 12.5px; font-weight: 600; color: var(--gray-500); margin-top: 5px; }
+    /* KPI */
+    .kpi-section { margin-bottom: 24px; }
+    .kpi-section-title { font-size: 13px; font-weight: 800; color: var(--gray-500); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; }
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+    .kpi-card { background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .kpi-num { font-size: 24px; font-weight: 900; color: var(--gray-900); letter-spacing: -0.5px; }
+    .kpi-lbl { font-size: 11.5px; font-weight: 600; color: var(--gray-500); margin-top: 3px; }
+    .kpi-sub { font-size: 10.5px; color: var(--india-green); font-weight: 700; margin-top: 2px; }
+    /* CARDS */
+    .card { background: white; border-radius: 18px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    .card-header { padding: 18px 22px 0; display: flex; align-items: center; justify-content: space-between; }
+    .card-title { font-size: 15px; font-weight: 800; color: var(--gray-900); }
+    .card-subtitle { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+    .card-body { padding: 18px 22px 22px; }
+    /* CHARTS */
+    .chart-container { background: white; border-radius: 18px; padding: 22px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+    .chart-title { font-size: 15px; font-weight: 800; color: var(--gray-900); }
+    .chart-subtitle { font-size: 12px; color: var(--gray-400); margin-top: 2px; }
+    .chart-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+    .chart-body canvas { max-height: 260px; }
+    /* GRID */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    /* TABLE */
+    .table-container { background: white; border-radius: 18px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 2px 10px rgba(0,0,0,0.04); overflow: hidden; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table thead th { padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 800; color: var(--gray-500); letter-spacing: 0.6px; text-transform: uppercase; background: var(--gray-50); border-bottom: 1px solid var(--gray-100); }
+    .table tbody td { padding: 12px 16px; border-bottom: 1px solid var(--gray-50); font-size: 13px; vertical-align: middle; }
+    .table tbody tr:last-child td { border-bottom: none; }
+    .table tbody tr:hover { background: var(--gray-50); }
+    /* FILTER */
+    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; stroke: var(--gray-400); stroke-width: 2; fill: none; }
+    .search-input { width: 100%; padding: 9px 14px 9px 38px; border: 1px solid var(--gray-200); border-radius: 10px; font-size: 13px; font-family: var(--font-main); background: white; color: var(--gray-800); transition: border-color 0.15s, box-shadow 0.15s; }
+    .search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,45,98,0.08); }
+    .filter-select { padding: 9px 14px; border: 1px solid var(--gray-200); border-radius: 10px; font-size: 13px; font-family: var(--font-main); background: white; color: var(--gray-700); cursor: pointer; min-width: 130px; }
+    .filter-select:focus { outline: none; border-color: var(--primary); }
+    /* BADGES */
+    .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .badge-submitted { background: #EFF6FF; color: #1e40af; } .badge-under_review { background: #FEF3C7; color: #92400E; }
+    .badge-validated { background: #EDE9FE; color: #5b21b6; } .badge-assigned { background: #CFFAFE; color: #0e7490; }
+    .badge-in_progress { background: #FFF7ED; color: #c2410c; } .badge-testing { background: #F0FDF4; color: #166534; }
+    .badge-resolved { background: #DCFCE7; color: #15803d; } .badge-rejected { background: #FEF2F2; color: #991b1b; }
+    .badge-escalated { background: #FFF1F2; color: #be123c; } .badge-closed { background: var(--gray-100); color: var(--gray-500); }
+    .badge-urgent { background: #FEF2F2; color: #dc2626; } .badge-high { background: #FFF7ED; color: #c2410c; }
+    .badge-medium { background: #FEF9C3; color: #713f12; } .badge-low { background: #F0FDF4; color: #166534; }
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; border: none; transition: all 0.15s; font-family: var(--font-main); }
+    .btn-primary { background: var(--navy); color: white; } .btn-primary:hover { background: #001A3A; transform: translateY(-1px); }
+    .btn-saffron { background: #FF9933; color: white; } .btn-saffron:hover { background: #e68a22; }
+    .btn-green { background: var(--india-green); color: white; } .btn-green:hover { background: #0E6806; }
+    .btn-danger { background: var(--danger); color: white; } .btn-danger:hover { background: #b91c1c; }
+    .btn-ghost { background: var(--gray-100); color: var(--gray-700); } .btn-ghost:hover { background: var(--gray-200); }
+    .btn-outline { background: transparent; color: var(--navy); border: 1.5px solid var(--navy); } .btn-outline:hover { background: var(--primary-light); }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; } .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 7px; }
+    /* AI MATCHING */
+    .ai-ch-card { background: white; border-radius: 16px; border: 1.5px solid var(--gray-200); margin-bottom: 12px; cursor: pointer; transition: box-shadow 0.2s, border-color 0.2s; }
+    .ai-ch-card:hover, .ai-ch-card.selected { border-color: #FF9933; box-shadow: 0 4px 18px rgba(255,153,51,0.15); }
+    .ai-ch-inner { padding: 16px 18px; }
+    .acc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .acc-id { font-size: 11px; font-weight: 800; color: var(--navy); background: var(--primary-light); padding: 3px 10px; border-radius: 6px; }
+    .acc-qs { font-size: 20px; font-weight: 900; color: var(--india-green); }
+    .acc-title { font-size: 13.5px; font-weight: 700; color: var(--gray-900); line-height: 1.4; margin-bottom: 6px; }
+    .acc-meta { display: flex; gap: 12px; font-size: 11px; color: var(--gray-400); flex-wrap: wrap; }
+    /* AI PANEL */
+    .ai-panel { background: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%); border: 1px solid #dbeafe; border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; }
+    .ai-panel-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .ai-panel-icon { width: 36px; height: 36px; border-radius: 10px; background: #1a56db; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+    .ai-panel-title { font-size: 14px; font-weight: 800; color: var(--navy); }
+    .ai-panel-sub { font-size: 11.5px; color: var(--gray-500); margin-top: 1px; }
+    .ai-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+    .ai-info-lbl { font-size: 10px; font-weight: 800; color: var(--gray-400); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 3px; }
+    .ai-info-val { font-size: 13.5px; font-weight: 800; color: var(--gray-900); }
+    .ai-pct { font-size: 12px; font-weight: 700; color: #1a56db; background: #dbeafe; padding: 2px 8px; border-radius: 6px; display: inline-block; margin-top: 2px; }
+    .ai-skills { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .ai-skill-tag { background: #ede9fe; color: #5b21b6; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .hr-dashed { height: 1px; background: #dbeafe; margin: 14px 0; }
+    /* MATCH BREAKDOWN */
+    .mb-card { background: white; border-radius: 14px; border: 1px solid var(--gray-200); padding: 16px 18px; margin-bottom: 14px; }
+    .mb-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .mb-score { font-size: 28px; font-weight: 900; color: var(--india-green); }
+    .mb-score-lbl { font-size: 11px; color: var(--gray-400); }
+    .mb-univ { font-size: 15px; font-weight: 800; color: var(--gray-900); }
+    .mb-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .mb-row-lbl { font-size: 12px; color: var(--gray-600); font-weight: 600; flex: 1; }
+    .mb-row-pct { font-size: 12px; font-weight: 800; color: var(--gray-700); width: 38px; text-align: right; }
+    .mb-bar-wrap { width: 100px; height: 6px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+    .mb-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #1a56db, #3b82f6); }
+    .mb-total { display: flex; align-items: center; justify-content: space-between; border-top: 1.5px dashed var(--gray-200); padding-top: 10px; margin-top: 8px; font-weight: 800; font-size: 13px; color: var(--gray-900); }
+    /* RECOMMENDATION TABLE */
+    .rec-table { width: 100%; border-collapse: collapse; }
+    .rec-table th { font-size: 11px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.6px; padding: 6px 10px; text-align: left; }
+    .rec-table td { padding: 10px; border-top: 1px solid var(--gray-100); font-size: 13px; }
+    /* DUPLICATE */
+    .dup-alert { background: #fffbeb; border: 1.5px solid #fbbf24; border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+    .dup-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .dup-hdr-icon { font-size: 22px; }
+    .dup-hdr-title { font-size: 14px; font-weight: 800; color: #92400e; }
+    .dup-sim { font-size: 13px; font-weight: 700; color: #b45309; }
+    .dup-card { background: white; border-radius: 10px; border: 1px solid #fde68a; padding: 12px 14px; margin-top: 10px; }
+    .dup-card-id { font-size: 11px; font-weight: 800; color: #b45309; margin-bottom: 4px; }
+    .dup-card-title { font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 4px; }
+    .dup-card-meta { font-size: 11.5px; color: var(--gray-500); }
+    .dup-actions { display: flex; gap: 8px; margin-top: 12px; }
+    /* QUALITY SCORE */
+    .quality-panel { background: white; border-radius: 14px; border: 1px solid var(--gray-200); padding: 18px 20px; margin-bottom: 16px; }
+    .qp-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .qp-title { font-size: 14px; font-weight: 800; color: var(--gray-900); }
+    .qp-ring { width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    .qp-ring-num { font-size: 18px; font-weight: 900; line-height: 1; }
+    .qp-ring-lbl { font-size: 9px; color: var(--gray-400); font-weight: 700; }
+    .qp-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .qp-row-lbl { font-size: 12.5px; color: var(--gray-600); font-weight: 600; flex: 1; }
+    .qp-row-pct { font-size: 12px; font-weight: 800; color: var(--gray-700); width: 38px; text-align: right; }
+    .qp-bar { width: 120px; height: 6px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+    .qp-bar-fill { height: 100%; border-radius: 4px; }
+    .needs-info { background: var(--danger-light); border: 1px solid #fecaca; border-radius: 12px; padding: 14px 16px; margin-top: 12px; }
+    .needs-info-title { font-size: 13px; font-weight: 800; color: var(--danger); margin-bottom: 8px; }
+    .needs-info-ul { list-style: none; }
+    .needs-info-ul li { font-size: 12.5px; color: #7f1d1d; padding: 2px 0; }
+    .needs-info-ul li::before { content: "• "; color: var(--danger); }
+    /* IMPACT */
+    .impact-panel { background: linear-gradient(135deg, #fef9ec 0%, #fffbf0 100%); border: 1px solid #fde68a; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+    .ip-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .ip-hdr-icon { font-size: 22px; }
+    .ip-hdr-title { font-size: 14px; font-weight: 800; color: #92400e; }
+    .ip-score-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 14px; }
+    .ip-score-num { font-size: 36px; font-weight: 900; color: var(--saffron-dark); letter-spacing: -1px; }
+    .ip-score-lbl { font-size: 13px; color: #b45309; font-weight: 700; }
+    .ip-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(253,230,138,0.5); }
+    .ip-row:last-child { border-bottom: none; }
+    .ip-row-lbl { font-size: 12.5px; color: #78350f; font-weight: 600; }
+    .ip-row-val { font-size: 12.5px; font-weight: 800; color: var(--gray-900); }
+    /* CAPACITY CARD */
+    .capacity-card { background: white; border-radius: 18px; border: 1px solid var(--gray-200); box-shadow: 0 2px 10px rgba(0,0,0,0.04); padding: 20px 22px; transition: all 0.2s; }
+    .capacity-card:hover { border-color: var(--primary-border); box-shadow: 0 6px 20px rgba(0,45,98,0.08); transform: translateY(-2px); }
+    .cc-hdr { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+    .cc-avatar { width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: var(--navy); background: var(--primary-light); border: 1px solid var(--primary-border); }
+    .cc-name { font-size: 15px; font-weight: 800; color: var(--gray-900); }
+    .cc-type { font-size: 11px; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    .cc-naac { display: inline-block; font-size: 10px; font-weight: 800; color: white; background: var(--india-green); padding: 2px 8px; border-radius: 6px; margin-top: 4px; }
+    .cc-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+    .cc-stat { text-align: center; padding: 10px 8px; background: var(--gray-50); border-radius: 10px; }
+    .cc-stat-num { font-size: 20px; font-weight: 900; color: var(--gray-900); line-height: 1; }
+    .cc-stat-lbl { font-size: 10px; font-weight: 700; color: var(--gray-400); margin-top: 3px; }
+    .cc-expertise-title { font-size: 11px; font-weight: 800; color: var(--gray-400); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
+    .cc-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .cc-tag { background: var(--primary-light); color: var(--navy); font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; border: 1px solid var(--primary-border); }
+    .cc-load-lbl { font-size: 11px; font-weight: 800; color: var(--gray-400); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 6px; }
+    .cc-load-wrap { height: 8px; background: var(--gray-100); border-radius: 6px; overflow: hidden; margin-bottom: 4px; }
+    .cc-load-bar { height: 100%; border-radius: 6px; }
+    .cc-load-pct { font-size: 11.5px; font-weight: 800; color: var(--gray-600); }
+    /* AI ASSIGN */
+    .ai-assign-top { background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%); border: 1px solid #c7d7f9; border-radius: 14px; padding: 18px 20px; margin-bottom: 16px; }
+    .aat-badge { font-size: 10px; font-weight: 800; color: #1a56db; background: #dbeafe; padding: 3px 10px; border-radius: 6px; letter-spacing: 0.5px; display: inline-block; margin-bottom: 10px; }
+    .aat-univ { font-size: 20px; font-weight: 900; color: var(--gray-900); margin-bottom: 4px; }
+    .aat-pct { font-size: 28px; font-weight: 900; color: var(--india-green); }
+    .aat-reasons { margin-top: 12px; display: flex; flex-direction: column; gap: 5px; }
+    .aat-reason { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--gray-700); font-weight: 600; }
+    .aat-reason::before { content: '\2713'; color: var(--india-green); font-weight: 900; }
+    .aat-others { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .aat-other { flex: 1; min-width: 110px; background: white; border: 1px solid var(--gray-200); border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; }
+    .aat-other:hover { border-color: var(--primary); }
+    .aat-other-name { font-size: 13px; font-weight: 700; color: var(--gray-900); }
+    .aat-other-pct { font-size: 12px; font-weight: 800; color: #1a56db; }
+    /* DECISION HISTORY */
+    .decision-item { padding: 16px 20px; border-bottom: 1px solid var(--gray-100); display: flex; gap: 14px; }
+    .decision-item:last-child { border-bottom: none; }
+    .di-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--india-green); flex-shrink: 0; margin-top: 4px; }
+    .di-date { font-size: 11px; font-weight: 800; color: var(--gray-400); margin-bottom: 4px; }
+    .di-action { font-size: 13px; font-weight: 700; color: var(--gray-900); margin-bottom: 8px; }
+    .di-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .di-dl { font-size: 10px; font-weight: 800; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; }
+    .di-dv { font-size: 12px; font-weight: 700; color: var(--gray-700); }
+    /* SLA */
+    .sla-item { padding: 14px 20px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 14px; }
+    .sla-item:last-child { border-bottom: none; }
+    .sla-overdue { background: var(--danger-light); color: var(--danger); font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 8px; border: 1px solid #fecaca; white-space: nowrap; }
+    .sla-id { font-size: 11px; font-weight: 800; color: var(--navy); }
+    .sla-title { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+    .sla-meta { font-size: 11.5px; color: var(--gray-400); margin-top: 2px; }
+    .sla-actions { margin-left: auto; display: flex; gap: 6px; }
+    /* NOTIFICATIONS */
+    .notif-item { padding: 14px 20px; border-bottom: 1px solid var(--gray-100); display: flex; gap: 12px; cursor: pointer; transition: background 0.15s; }
+    .notif-item:hover { background: var(--gray-50); }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+    .notif-text { font-size: 13px; font-weight: 600; color: var(--gray-800); line-height: 1.4; }
+    .notif-time { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+    /* HEATMAP */
+    .heatmap-legend { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .hm-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--gray-600); }
+    .hm-dot { width: 12px; height: 12px; border-radius: 50%; }
+    #jharkhand-heatmap { border-radius: 14px; overflow: hidden; border: 1px solid var(--gray-200); height: 380px; }
+    /* BROADCAST */
+    .broadcast-form { background: var(--gray-50); border-radius: 14px; padding: 20px 22px; }
+    .br-radio-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .br-radio input { display: none; }
+    .br-radio label { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 10px; border: 1.5px solid var(--gray-200); font-size: 13px; font-weight: 700; color: var(--gray-600); cursor: pointer; transition: all 0.15s; background: white; }
+    .br-radio input:checked + label { border-color: var(--navy); background: var(--primary-light); color: var(--navy); }
+    .broadcast-ta { width: 100%; padding: 12px 14px; border: 1px solid var(--gray-200); border-radius: 10px; font-size: 13.5px; font-family: var(--font-main); resize: vertical; min-height: 100px; transition: border-color 0.15s; }
+    .broadcast-ta:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,45,98,0.08); }
+    .form-label { font-size: 12px; font-weight: 800; color: var(--gray-600); letter-spacing: 0.4px; margin-bottom: 6px; display: block; }
+    .form-group { margin-bottom: 14px; }
+    .form-control { width: 100%; padding: 9px 12px; border: 1px solid var(--gray-200); border-radius: 10px; font-size: 13px; font-family: var(--font-main); color: var(--gray-800); transition: border-color 0.15s; }
+    .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0,45,98,0.08); }
+    /* ACTIVITY */
+    .activity-item { padding: 12px 20px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: flex-start; gap: 12px; }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+    .activity-title { font-size: 13px; font-weight: 700; color: var(--gray-900); }
+    .activity-desc { font-size: 11.5px; color: var(--gray-400); margin-top: 2px; }
+    .activity-time { margin-left: auto; font-size: 11px; color: var(--gray-400); white-space: nowrap; flex-shrink: 0; padding-top: 2px; }
+    /* SKELETON + SPINNER */
+    .skeleton { background: linear-gradient(90deg, #f0ece4 25%, #e8e4dc 50%, #f0ece4 75%); background-size: 400% 100%; animation: shimmer 1.4s ease-in-out infinite; border-radius: 14px; }
+    @keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--gray-200); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.75s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* MODALS */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(4px); z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: white; border-radius: 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.25); width: 100%; max-width: 820px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; transform: scale(0.96); transition: transform 0.2s; }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal-sm { max-width: 480px; } .modal-lg { max-width: 1000px; }
+    .modal-header { padding: 22px 28px 18px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0; }
+    .modal-title { font-size: 18px; font-weight: 900; color: var(--gray-900); letter-spacing: -0.3px; }
+    .modal-subtitle { font-size: 12px; color: var(--gray-400); margin-top: 3px; }
+    .modal-close { width: 32px; height: 32px; border-radius: 8px; background: var(--gray-100); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--gray-500); flex-shrink: 0; transition: background 0.15s; }
+    .modal-close:hover { background: var(--gray-200); }
+    .modal-body { padding: 24px 28px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 16px 28px; border-top: 1px solid var(--gray-100); display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-shrink: 0; }
+    /* SECTION HEADER */
+    .section-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+    .section-title { font-size: 22px; font-weight: 800; color: var(--gray-900); letter-spacing: -0.4px; }
+    .section-subtitle { font-size: 13px; color: var(--gray-400); margin-top: 3px; }
+    /* LEADERBOARD */
+    .leaderboard-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+    .leaderboard-item:last-child { border-bottom: none; }
+    .lb-rank { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; flex-shrink: 0; }
+    .lb-rank.gold { background: #fef9c3; color: #854d0e; } .lb-rank.silver { background: var(--gray-100); color: var(--gray-600); }
+    .lb-rank.bronze { background: #fff7ed; color: #9a3412; } .lb-rank.other { background: var(--gray-100); color: var(--gray-500); }
+    .lb-info { flex: 1; }
+    .lb-name { font-size: 13px; font-weight: 700; color: var(--gray-900); }
+    .lb-meta { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+    .lb-score { text-align: right; }
+    .lb-score-num { font-size: 17px; font-weight: 900; color: var(--navy); }
+    .lb-score-lbl { font-size: 10px; color: var(--gray-400); }
+    /* RESPONSIVE */
+    @media (max-width: 1100px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } .grid-2 { grid-template-columns: 1fr; } .kpi-row { grid-template-columns: repeat(2, 1fr); } .ai-info-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) { :root { --sidebar-w: 0px; } .sidebar { position: fixed; left: -280px; width: 272px; z-index: 100; transition: left 0.25s; } .sidebar.open { left: 0; } .fixed-canvas-bg { left: 0; } }
+  </style>
 </head>
 <body>
-<div class="dashboard-layout">
+<div class="app-layout">
+  <div class="fixed-canvas-bg"></div>
+  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      </div>
-      <div class="sidebar-brand">
-        <div class="sidebar-brand-name">InnovateSphere</div>
-        <div class="sidebar-brand-sub">Admin Control</div>
-      </div>
-      <button class="sidebar-toggle" onclick="toggleSidebar()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    <div class="sidebar-tricolor"></div>
+    <a class="sidebar-brand" href="#">
+      <div class="brand-logo"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+      <div><div class="brand-title">Jan<span class="bs">Se</span><span class="bg">tu</span></div><div class="brand-tag">ADMIN COMMAND CENTER</div></div>
+    </a>
+    <div class="admin-pill"><div class="admin-pill-dot"></div><div class="admin-pill-text">&#128737; Admin Access</div><div class="admin-pill-name" id="sidebarName">Admin</div></div>
+    <nav class="sidebar-menu">
+      <div class="nav-section-label">Command Center</div>
+      <button class="nav-item active" id="nav-overview" onclick="showSection('overview')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview
       </button>
-    </div>
-    <nav class="sidebar-nav">
-      <div class="sidebar-section-label">Navigation</div>
-      <a href="/" class="sidebar-link">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        <span class="sidebar-link-text">Public Feed</span>
-      </a>
-      <a href="/map" class="sidebar-link">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-        <span class="sidebar-link-text">India Map</span>
-      </a>
-      <div class="sidebar-section-label">Dashboard</div>
-      <a class="sidebar-link active" id="nav-overview" onclick="showSection('overview')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-        <span class="sidebar-link-text">Overview</span>
-      </a>
-
-      <div class="sidebar-section-label">Management</div>
-      <a class="sidebar-link" id="nav-challenges" onclick="showSection('challenges')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span class="sidebar-link-text">Challenges</span>
-        <span class="sidebar-badge" id="pendingCountBadge" style="display:none">0</span>
-      </a>
-      <a class="sidebar-link" id="nav-users" onclick="showSection('users')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
-        <span class="sidebar-link-text">Users</span>
-      </a>
-      <a class="sidebar-link" id="nav-universities" onclick="showSection('universities')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
-        <span class="sidebar-link-text">Universities</span>
-      </a>
-      <a class="sidebar-link" id="nav-industry" onclick="showSection('industry')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
-        <span class="sidebar-link-text">Industry Partners</span>
-      </a>
-      <div class="sidebar-section-label">Analytics</div>
-      <a class="sidebar-link" id="nav-analytics" onclick="showSection('analytics')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        <span class="sidebar-link-text">Analytics</span>
-      </a>
-      <a class="sidebar-link" href="/map">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
-        <span class="sidebar-link-text">Live India Map</span>
-      </a>
-      <a class="sidebar-link" id="nav-activity" onclick="showSection('activity')">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span class="sidebar-link-text">Activity Log</span>
-      </a>
-
+      <div class="nav-section-label">Challenge Operations</div>
+      <button class="nav-item" id="nav-challenges" onclick="showSection('challenges')">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>All Challenges
+        <span class="nav-badge" id="pendingCountBadge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" id="nav-pending" onclick="showSection('pending')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Pending Validation
+        <span class="nav-badge red" id="pendingValidBadge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" id="nav-aimatching" onclick="showSection('aimatching')">
+        <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>AI Matching
+      </button>
+      <button class="nav-item" id="nav-assigned" onclick="showSection('assigned')">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Assigned
+      </button>
+      <button class="nav-item" id="nav-sla" onclick="showSection('sla')">
+        <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Overdue / Escalated
+        <span class="nav-badge red" id="overdueNavBadge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" id="nav-resolved" onclick="showSection('resolved')">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Resolved
+      </button>
+      <div class="nav-section-label">Network</div>
+      <button class="nav-item" id="nav-users" onclick="showSection('users')">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Citizens
+      </button>
+      <button class="nav-item" id="nav-universities" onclick="showSection('universities')">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Universities
+      </button>
+      <button class="nav-item" id="nav-industry" onclick="showSection('industry')">
+        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>Industry / CSR
+      </button>
+      <div class="nav-section-label">Intelligence</div>
+      <button class="nav-item" id="nav-analytics" onclick="showSection('analytics')">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Impact Analytics
+      </button>
+      <button class="nav-item" id="nav-heatmap" onclick="showSection('heatmap')">
+        <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>District Heatmap
+      </button>
+      <div class="nav-section-label">Governance</div>
+      <button class="nav-item" id="nav-notifications" onclick="showSection('notifications')">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>Notifications
+        <span class="nav-badge" id="notifNavBadge" style="display:none">0</span>
+      </button>
+      <button class="nav-item" id="nav-activity" onclick="showSection('activity')">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Activity / Audit Log
+      </button>
     </nav>
     <div class="sidebar-footer">
-      <div class="sidebar-user" id="sidebarUser">
-        <div class="sidebar-user-avatar" id="sidebarAvatar">A</div>
-        <div class="sidebar-user-info">
-          <div class="sidebar-user-name" id="sidebarName">Admin</div>
-          <div class="sidebar-user-role">Administrator</div>
-        </div>
-      </div>
-      <button onclick="logout()" class="sidebar-link" style="width:100%;color:var(--danger);margin-top:8px">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span class="sidebar-link-text">Logout</span>
+      <div class="sidebar-user"><div class="sidebar-avatar" id="sidebarAvatar">A</div><div><div class="sidebar-uname" id="sidebarNameFull">Administrator</div><div class="sidebar-urole">System Administrator</div></div></div>
+      <button class="btn-logout" onclick="logout()">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Logout
       </button>
     </div>
   </aside>
-  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
-
-  <main class="main-content" id="mainContent">
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="topbar-btn" onclick="openMobileSidebar()" id="mobileSidebarBtn" style="display:none">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-        <div>
-          <div class="topbar-page-title" id="pageTitle">Admin Overview</div>
-          <div class="topbar-breadcrumb">Admin Panel / <span id="pageBreadcrumb">Overview</span></div>
-        </div>
-      </div>
+  <!-- MAIN -->
+  <div class="main-viewport">
+    <header class="top-header">
+      <div><div class="topbar-title" id="pageTitle">Admin Overview</div><div class="topbar-breadcrumb">JanSetu Admin / <span id="pageBreadcrumb">Overview</span></div></div>
       <div class="topbar-right">
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--danger);border-radius:99px;font-size:12px;font-weight:600;color:white">
-          <span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6)"></span>
-          Admin Access
-        </div>
-        <div class="topbar-divider"></div>
-        <div class="topbar-user">
-          <div class="topbar-user-avatar" id="topbarAvatar" style="background:linear-gradient(135deg,var(--danger),#f87171)">A</div>
-          <div class="topbar-user-name" id="topbarName">Admin</div>
-        </div>
+        <div class="topbar-admin-badge"><span style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6)"></span>Live Admin</div>
+        <button class="topbar-notif" onclick="showSection('notifications')">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <div class="notif-dot" id="topbarNotifDot" style="display:none">0</div>
+        </button>
+        <div class="topbar-user"><div class="topbar-avatar" id="topbarAvatar">A</div><div class="topbar-uname" id="topbarName">Admin</div></div>
       </div>
     </header>
-
     <div class="page-content">
-
-      <!-- ── ADMIN OVERVIEW ── -->
-      <div id="section-overview" class="dashboard-section">
-        <div class="welcome-banner admin-banner">
-          <div class="welcome-content">
-            <div class="welcome-greeting">Administrator Control Panel</div>
-            <div class="welcome-name" id="welcomeName">InnovateSphere Command Center</div>
-            <div class="welcome-message">Monitor all challenges, manage universities, users, and track platform-wide performance metrics in real-time.</div>
-            <div class="welcome-actions">
-              <button onclick="showSection('challenges')" class="btn-white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>
-                Review Pending
+      <!-- OVERVIEW -->
+      <div id="section-overview" class="dashboard-section active">
+        <div class="welcome-banner">
+          <div class="wb-pattern"></div><div class="wb-ribbon"></div>
+          <div class="wb-content">
+            <div class="wb-greeting">&#127470;&#127475; JanSetu Command Center</div>
+            <div class="wb-title" id="welcomeName">Administrator Dashboard</div>
+            <div class="wb-desc">Monitor all challenges, manage university and industry networks, and leverage AI-powered matching to drive impactful solutions across Jharkhand.</div>
+            <div class="wb-actions">
+              <button onclick="showSection('pending')" class="btn-wb btn-wb-saffron">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/></svg>Review Pending
               </button>
-              <button onclick="showSection('analytics')" class="btn-white-outline">View Analytics</button>
+              <button onclick="showSection('aimatching')" class="btn-wb btn-wb-ghost">&#9889; AI Matching</button>
+              <button onclick="showSection('analytics')" class="btn-wb btn-wb-ghost">&#128202; Analytics</button>
             </div>
           </div>
         </div>
-
-        <!-- Platform Metrics -->
         <div class="metrics-grid" id="adminMetrics">
-          <div class="metric-card skeleton" style="height:140px"></div>
-          <div class="metric-card skeleton" style="height:140px"></div>
-          <div class="metric-card skeleton" style="height:140px"></div>
-          <div class="metric-card skeleton" style="height:140px"></div>
+          <div class="skeleton" style="height:110px"></div><div class="skeleton" style="height:110px"></div>
+          <div class="skeleton" style="height:110px"></div><div class="skeleton" style="height:110px"></div>
         </div>
-
-        <!-- Charts Row -->
-        <div class="dashboard-grid" style="margin-bottom:24px">
-          <div class="chart-container">
-            <div class="chart-header">
-              <div><div class="chart-title">Submission Trends</div><div class="chart-subtitle">Monthly challenges submitted</div></div>
-            </div>
-            <div class="chart-body"><canvas id="trendChart"></canvas></div>
+        <div class="grid-2">
+          <div class="chart-container"><div class="chart-header"><div><div class="chart-title">Submission Trends</div><div class="chart-subtitle">Monthly challenges submitted</div></div></div><div class="chart-body"><canvas id="trendChart"></canvas></div></div>
+          <div class="chart-container"><div class="chart-header"><div><div class="chart-title">Status Distribution</div><div class="chart-subtitle">Current pipeline</div></div></div><div class="chart-body"><canvas id="statusChart"></canvas></div></div>
+        </div>
+        <div class="grid-2" style="margin-top:20px">
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">Pending Validation</div><div class="card-subtitle">Challenges awaiting review</div></div><button onclick="showSection('pending')" class="btn btn-ghost btn-sm">View All</button></div>
+            <div class="card-body" id="pendingChallengesList"><div class="skeleton" style="height:60px;margin-bottom:8px"></div><div class="skeleton" style="height:60px"></div></div>
           </div>
-          <div class="chart-container">
-            <div class="chart-header">
-              <div><div class="chart-title">Status Distribution</div><div class="chart-subtitle">Current challenge pipeline</div></div>
-            </div>
-            <div class="chart-body"><canvas id="statusChart"></canvas></div>
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">University Rankings</div><div class="card-subtitle">By performance score</div></div></div>
+            <div class="card-body" id="univLeaderboard"><div class="skeleton" style="height:50px;margin-bottom:8px"></div><div class="skeleton" style="height:50px"></div></div>
           </div>
         </div>
-
-        <div class="dashboard-grid-3" style="margin-bottom:24px">
-          <!-- Pending Challenges -->
-          <div class="chart-container" style="grid-column:span 2">
-            <div class="chart-header" style="margin-bottom:16px">
-              <div><div class="chart-title">Pending Validation</div><div class="chart-subtitle">Challenges awaiting admin review</div></div>
-              <button onclick="showSection('challenges')" class="btn btn-sm btn-outline-primary">View All</button>
-            </div>
-            <div class="chart-body" id="pendingChallengesList" style="padding-top:0">
-              <div class="skeleton skeleton-card" style="height:70px;margin-bottom:8px"></div>
-              <div class="skeleton skeleton-card" style="height:70px;margin-bottom:8px"></div>
-            </div>
-          </div>
-
-          <!-- University Leaderboard -->
-          <div class="chart-container">
-            <div class="chart-header" style="margin-bottom:16px">
-              <div><div class="chart-title">University Rankings</div><div class="chart-subtitle">By performance score</div></div>
-            </div>
-            <div class="chart-body" id="univLeaderboard" style="padding-top:0">
-              <div class="skeleton skeleton-card" style="height:60px;margin-bottom:8px"></div>
-              <div class="skeleton skeleton-card" style="height:60px;margin-bottom:8px"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Category Chart -->
-        <div class="chart-container" style="margin-bottom:24px">
-          <div class="chart-header">
-            <div><div class="chart-title">Category Distribution</div><div class="chart-subtitle">Challenges by domain</div></div>
-          </div>
-          <div class="chart-body"><canvas id="categoryBarChart"></canvas></div>
-        </div>
+        <div class="chart-container" style="margin-top:20px"><div class="chart-header"><div><div class="chart-title">Category Distribution</div><div class="chart-subtitle">Challenges by domain</div></div></div><div class="chart-body"><canvas id="categoryBarChart"></canvas></div></div>
       </div>
-
-      <!-- ── CHALLENGES MANAGEMENT ── -->
-      <div id="section-challenges" class="dashboard-section" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-          <div>
-            <h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">Challenges Management</h2>
-            <div style="font-size:13px;color:var(--gray-400);margin-top:4px">Review, validate, assign and monitor all challenges</div>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button onclick="exportChallenges()" class="btn btn-ghost">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Export CSV
-            </button>
-          </div>
-        </div>
-
+      <!-- ALL CHALLENGES -->
+      <div id="section-challenges" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">All Challenges</div><div class="section-subtitle">Review, validate, assign and monitor challenges</div></div><div><button onclick="exportChallenges()" class="btn btn-ghost btn-sm">&#11015; Export CSV</button></div></div>
         <div class="filter-bar">
-          <div class="search-bar" style="flex:1;min-width:200px">
-            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" placeholder="Search challenges..." id="adminChallengeSearch" oninput="loadAdminChallenges()">
-          </div>
+          <div class="search-wrap"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" class="search-input" placeholder="Search challenges..." id="adminChallengeSearch" oninput="debounceLoadChallenges()"></div>
           <select class="filter-select" id="adminStatusFilter" onchange="loadAdminChallenges()">
-            <option value="">All Statuses</option>
-            <option value="submitted">Submitted</option>
-            <option value="under_review">Under Review</option>
-            <option value="validated">Validated</option>
-            <option value="assigned">Assigned</option>
-            <option value="in_progress">In Progress</option>
-            <option value="testing">Testing</option>
-            <option value="resolved">Resolved</option>
-            <option value="rejected">Rejected</option>
+            <option value="">All Statuses</option><option value="submitted">Submitted</option><option value="under_review">Under Review</option>
+            <option value="validated">Validated</option><option value="assigned">Assigned</option><option value="in_progress">In Progress</option>
+            <option value="testing">Testing</option><option value="resolved">Resolved</option><option value="rejected">Rejected</option><option value="escalated">Escalated</option>
           </select>
           <select class="filter-select" id="adminCategoryFilter" onchange="loadAdminChallenges()">
-            <option value="">All Categories</option>
-            <option>Education</option><option>Healthcare</option><option>Agriculture</option>
-            <option>Water Management</option><option>Sanitation & Environment</option>
-            <option>Rural Livelihoods</option><option>Accessibility</option>
-            <option>Urban Infrastructure</option><option>Public Administration</option>
-            <option>Energy & Technology</option>
+            <option value="">All Categories</option><option>Education</option><option>Healthcare</option><option>Agriculture</option>
+            <option>Water Management</option><option>Sanitation &amp; Environment</option><option>Rural Livelihoods</option>
+            <option>Accessibility</option><option>Urban Infrastructure</option><option>Public Administration</option><option>Energy &amp; Technology</option>
           </select>
           <select class="filter-select" id="adminPriorityFilter" onchange="loadAdminChallenges()">
-            <option value="">All Priorities</option>
-            <option value="urgent">Urgent</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
+            <option value="">All Priorities</option><option value="urgent">Urgent</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
           </select>
         </div>
-
         <div class="table-container">
           <table class="table" id="challengesTable">
-            <thead>
-              <tr>
-                <th>ID / Title</th>
-                <th>Category</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>District</th>
-                <th>Submitted By</th>
-                <th>Assigned To</th>
-                <th>Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="challengesTableBody">
-              <tr><td colspan="9" style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></td></tr>
-            </tbody>
+            <thead><tr><th>ID / Title</th><th>Category</th><th>Priority</th><th>Status</th><th>District</th><th>Submitter</th><th>Assigned To</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="challengesTableBody"><tr><td colspan="9" style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody>
           </table>
         </div>
-        <div id="adminChallengesPagination"></div>
+        <div id="adminChallengesPagination" style="margin-top:16px;display:flex;gap:6px;justify-content:center"></div>
       </div>
-
-      <!-- ── USERS MANAGEMENT ── -->
-      <div id="section-users" class="dashboard-section" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-          <div>
-            <h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">User Management</h2>
-            <div style="font-size:13px;color:var(--gray-400)">Manage platform users and their permissions</div>
-          </div>
-        </div>
-
-        <div class="filter-bar">
-          <div class="search-bar" style="flex:1;min-width:200px">
-            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" placeholder="Search users..." id="userSearch" oninput="loadUsers()">
-          </div>
-          <select class="filter-select" id="userRoleFilter" onchange="loadUsers()">
-            <option value="">All Roles</option>
-            <option value="citizen">Citizen</option>
-            <option value="university_rep">University Rep</option>
-            <option value="industry_rep">Industry Rep</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-
+      <!-- PENDING VALIDATION -->
+      <div id="section-pending" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">Pending Validation</div><div class="section-subtitle">New challenges awaiting admin review and AI quality analysis</div></div></div>
         <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Joined</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody">
-              <tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></td></tr>
-            </tbody>
-          </table>
+          <table class="table"><thead><tr><th>ID / Title</th><th>Category</th><th>Priority</th><th>District</th><th>Quality Score</th><th>Submitted</th><th>Actions</th></tr></thead>
+          <tbody id="pendingTableBody"><tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody></table>
         </div>
-        <div id="usersPagination"></div>
       </div>
-
-      <!-- ── UNIVERSITIES MANAGEMENT ── -->
-      <div id="section-universities" class="dashboard-section" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
+      <!-- AI MATCHING CENTER -->
+      <div id="section-aimatching" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">&#9889; AI Matching Center</div><div class="section-subtitle">AI-powered university and industry partner recommendations for validated challenges</div></div></div>
+        <div class="grid-2" style="align-items:start">
           <div>
-            <h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">Universities</h2>
-            <div style="font-size:13px;color:var(--gray-400)">Manage partner universities and their performance</div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-header"><div><div class="card-title">Validated Challenges</div><div class="card-subtitle">Click a challenge to see AI recommendations</div></div></div>
+              <div class="card-body" id="aiMatchingChallengeList">
+                <div class="skeleton" style="height:80px;margin-bottom:10px"></div><div class="skeleton" style="height:80px;margin-bottom:10px"></div><div class="skeleton" style="height:80px"></div>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="workers-grid" id="univGrid">
-          <div class="skeleton skeleton-card" style="height:200px"></div>
-          <div class="skeleton skeleton-card" style="height:200px"></div>
-          <div class="skeleton skeleton-card" style="height:200px"></div>
-        </div>
-      </div>
-
-      <!-- ── INDUSTRY MANAGEMENT ── -->
-      <div id="section-industry" class="dashboard-section" style="display:none">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px">
-          <div>
-            <h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">Industry Partners</h2>
-            <div style="font-size:13px;color:var(--gray-400)">Manage industry collaborators and funding partners</div>
-          </div>
-        </div>
-        <div class="workers-grid" id="industryGrid">
-          <div class="skeleton skeleton-card" style="height:200px"></div>
-          <div class="skeleton skeleton-card" style="height:200px"></div>
-        </div>
-      </div>
-
-      <!-- ── ANALYTICS ── -->
-      <div id="section-analytics" class="dashboard-section" style="display:none">
-        <div style="margin-bottom:24px">
-          <h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">Platform Analytics</h2>
-          <div style="font-size:13px;color:var(--gray-400)">Comprehensive insights and performance data</div>
-        </div>
-        <div class="metrics-grid" id="analyticsMetrics">
-          <div class="skeleton skeleton-card" style="height:140px"></div>
-          <div class="skeleton skeleton-card" style="height:140px"></div>
-          <div class="skeleton skeleton-card" style="height:140px"></div>
-          <div class="skeleton skeleton-card" style="height:140px"></div>
-        </div>
-        <div class="dashboard-grid" style="margin-bottom:24px">
-          <div class="chart-container">
-            <div class="chart-header"><div><div class="chart-title">Monthly Trends</div><div class="chart-subtitle">Submissions vs Resolutions</div></div></div>
-            <div class="chart-body"><canvas id="analyticsLineChart"></canvas></div>
-          </div>
-          <div class="chart-container">
-            <div class="chart-header"><div><div class="chart-title">Domain Distribution</div><div class="chart-subtitle">Challenges by category</div></div></div>
-            <div class="chart-body"><canvas id="analyticsDoughnutChart"></canvas></div>
-          </div>
-        </div>
-        <div class="chart-container">
-          <div class="chart-header"><div><div class="chart-title">University Performance</div><div class="chart-subtitle">Assigned vs Resolved per university</div></div></div>
-          <div class="chart-body"><canvas id="univPerfChart"></canvas></div>
-        </div>
-      </div>
-
-      <!-- ── ACTIVITY LOG ── -->
-      <div id="section-activity" class="dashboard-section" style="display:none">
-        <div style="margin-bottom:24px">
-          <h2 style="font-size:22px;font-weight:800;color:var(--gray-900)">Activity Log</h2>
-          <div style="font-size:13px;color:var(--gray-400)">All platform events and admin actions</div>
-        </div>
-        <div class="card">
-          <div class="card-body">
-            <div class="activity-feed" id="activityLogList">
-              <div class="skeleton skeleton-card" style="height:60px;margin-bottom:10px"></div>
-              <div class="skeleton skeleton-card" style="height:60px;margin-bottom:10px"></div>
-              <div class="skeleton skeleton-card" style="height:60px"></div>
+          <div id="aiMatchingPanel">
+            <div style="padding:40px;text-align:center;background:white;border-radius:18px;border:1px solid var(--gray-200)">
+              <div style="font-size:48px;margin-bottom:12px">&#9889;</div>
+              <div style="font-size:16px;font-weight:800;color:var(--gray-900);margin-bottom:6px">Select a Challenge</div>
+              <div style="font-size:13px;color:var(--gray-400)">Click any challenge on the left to see AI-powered matching analysis</div>
             </div>
           </div>
         </div>
       </div>
-
-    </div>
-  </main>
-</div>
-
-<!-- Challenge Detail/Action Modal -->
-<div class="modal-overlay" id="challengeActionModal">
-  <div class="modal modal-xl">
-    <div class="modal-header">
-      <div>
-        <div class="modal-title" id="caTitle">Challenge Details</div>
-        <div id="caSubtitle" style="font-size:12px;color:var(--gray-400);margin-top:3px"></div>
+      <!-- ASSIGNED -->
+      <div id="section-assigned" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">Assigned Challenges</div><div class="section-subtitle">Active challenges assigned to universities</div></div></div>
+        <div class="table-container"><table class="table"><thead><tr><th>ID / Title</th><th>Category</th><th>University</th><th>Status</th><th>Deadline</th><th>Days Left</th><th>Actions</th></tr></thead>
+        <tbody id="assignedTableBody"><tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody></table></div>
       </div>
-      <button class="modal-close" onclick="closeModal('challengeActionModal')">✕</button>
+      <!-- SLA -->
+      <div id="section-sla" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">&#9888; SLA Monitoring</div><div class="section-subtitle">Overdue and escalated challenges requiring immediate action</div></div></div>
+        <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr)" id="slaMetrics">
+          <div class="skeleton" style="height:100px"></div><div class="skeleton" style="height:100px"></div><div class="skeleton" style="height:100px"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Overdue Challenges</div><div class="card-subtitle">Requires immediate action</div></div></div>
+          <div id="slaList"><div class="skeleton" style="height:70px;margin:16px 22px 8px"></div><div class="skeleton" style="height:70px;margin:0 22px 16px"></div></div>
+        </div>
+      </div>
+      <!-- RESOLVED -->
+      <div id="section-resolved" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">&#9989; Resolved Challenges</div><div class="section-subtitle">Successfully completed challenges</div></div></div>
+        <div class="table-container"><table class="table"><thead><tr><th>ID / Title</th><th>Category</th><th>University</th><th>Resolved On</th><th>Impact Score</th><th>Actions</th></tr></thead>
+        <tbody id="resolvedTableBody"><tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody></table></div>
+      </div>
+      <!-- CITIZENS -->
+      <div id="section-users" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">Citizens</div><div class="section-subtitle">Manage platform users and their permissions</div></div></div>
+        <div class="filter-bar">
+          <div class="search-wrap"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" class="search-input" placeholder="Search users..." id="userSearch" oninput="debounceLoadUsers()"></div>
+          <select class="filter-select" id="userRoleFilter" onchange="loadUsers()"><option value="">All Roles</option><option value="citizen">Citizen</option><option value="university_rep">University Rep</option><option value="industry_rep">Industry Rep</option><option value="admin">Admin</option></select>
+        </div>
+        <div class="table-container"><table class="table"><thead><tr><th>User</th><th>Role</th><th>Email</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody id="usersTableBody"><tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></td></tr></tbody></table></div>
+        <div id="usersPagination" style="margin-top:16px;display:flex;gap:6px;justify-content:center"></div>
+      </div>
+      <!-- UNIVERSITIES -->
+      <div id="section-universities" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">Universities</div><div class="section-subtitle">Partner universities — capacity, expertise and performance data</div></div></div>
+        <div class="grid-auto" id="univGrid"><div class="skeleton" style="height:320px"></div><div class="skeleton" style="height:320px"></div><div class="skeleton" style="height:320px"></div></div>
+      </div>
+      <!-- INDUSTRY -->
+      <div id="section-industry" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">Industry / CSR Partners</div><div class="section-subtitle">Industry collaborators — CSR budget, capabilities and availability</div></div></div>
+        <div class="grid-auto" id="industryGrid"><div class="skeleton" style="height:320px"></div><div class="skeleton" style="height:320px"></div></div>
+      </div>
+      <!-- IMPACT ANALYTICS -->
+      <div id="section-analytics" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">Impact Analytics</div><div class="section-subtitle">Comprehensive platform performance and outcome metrics</div></div></div>
+        <div class="kpi-section">
+          <div class="kpi-section-title">&#128202; Platform Impact</div>
+          <div class="kpi-row">
+            <div class="kpi-card"><div class="kpi-num" id="kpi-reported">&#8212;</div><div class="kpi-lbl">Problems Reported</div></div>
+            <div class="kpi-card"><div class="kpi-num" id="kpi-validated">&#8212;</div><div class="kpi-lbl">Problems Validated</div></div>
+            <div class="kpi-card"><div class="kpi-num" id="kpi-solved">&#8212;</div><div class="kpi-lbl">Problems Solved</div></div>
+            <div class="kpi-card"><div class="kpi-num" id="kpi-impacted">3.2M</div><div class="kpi-lbl">People Impacted</div><div class="kpi-sub">Estimated reach</div></div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-card"><div class="kpi-num" id="kpi-univs">&#8212;</div><div class="kpi-lbl">Universities</div></div>
+            <div class="kpi-card"><div class="kpi-num" id="kpi-industry">&#8212;</div><div class="kpi-lbl">Industry Partners</div></div>
+            <div class="kpi-card"><div class="kpi-num">186</div><div class="kpi-lbl">Successful Pilots</div></div>
+            <div class="kpi-card"><div class="kpi-num">4.4/5</div><div class="kpi-lbl">Citizen Satisfaction</div><div class="kpi-sub">Avg rating</div></div>
+          </div>
+        </div>
+        <div class="kpi-section">
+          <div class="kpi-section-title">&#9889; Efficiency</div>
+          <div class="kpi-row">
+            <div class="kpi-card"><div class="kpi-num">1.8</div><div class="kpi-lbl">Avg Validation Time</div><div class="kpi-sub">days</div></div>
+            <div class="kpi-card"><div class="kpi-num">4.2</div><div class="kpi-lbl">Avg Matching Time</div><div class="kpi-sub">minutes (AI)</div></div>
+            <div class="kpi-card"><div class="kpi-num" id="kpi-res-time">&#8212;</div><div class="kpi-lbl">Avg Resolution Time</div><div class="kpi-sub">days</div></div>
+            <div class="kpi-card"><div class="kpi-num">87%</div><div class="kpi-lbl">AI Recommendation Accuracy</div></div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="chart-container"><div class="chart-header"><div><div class="chart-title">Monthly Trends</div><div class="chart-subtitle">Submissions vs Resolutions</div></div></div><div class="chart-body"><canvas id="analyticsLineChart"></canvas></div></div>
+          <div class="chart-container"><div class="chart-header"><div><div class="chart-title">Domain Distribution</div><div class="chart-subtitle">Challenges by category</div></div></div><div class="chart-body"><canvas id="analyticsDoughnutChart"></canvas></div></div>
+        </div>
+        <div class="chart-container" style="margin-top:20px"><div class="chart-header"><div><div class="chart-title">University Performance</div><div class="chart-subtitle">Assigned vs Resolved per university</div></div></div><div class="chart-body"><canvas id="univPerfChart"></canvas></div></div>
+        <div class="card" style="margin-top:20px">
+          <div class="card-header"><div><div class="card-title">&#128293; High Impact Challenges</div><div class="card-subtitle">Ranked by impact score</div></div></div>
+          <div class="card-body" id="highImpactList"><div class="skeleton" style="height:50px;margin-bottom:8px"></div><div class="skeleton" style="height:50px"></div></div>
+        </div>
+      </div>
+      <!-- DISTRICT HEATMAP -->
+      <div id="section-heatmap" class="dashboard-section">
+        <div class="section-header">
+          <div><div class="section-title">&#128506; Jharkhand District Heatmap</div><div class="section-subtitle">Problem density and category breakdown by district</div></div>
+          <div class="heatmap-legend">
+            <div class="hm-legend-item"><div class="hm-dot" style="background:#DC2626"></div>High Priority</div>
+            <div class="hm-legend-item"><div class="hm-dot" style="background:#D97706"></div>Medium</div>
+            <div class="hm-legend-item"><div class="hm-dot" style="background:#059669"></div>Low</div>
+          </div>
+        </div>
+        <div class="grid-2" style="align-items:start">
+          <div id="jharkhand-heatmap"></div>
+          <div class="card" id="districtDetailPanel">
+            <div class="card-body" style="text-align:center;padding:40px">
+              <div style="font-size:40px;margin-bottom:10px">&#128506;</div>
+              <div style="font-size:15px;font-weight:800;color:var(--gray-900)">Click a District</div>
+              <div style="font-size:13px;color:var(--gray-400);margin-top:4px">Click any district circle on the map to see detailed breakdown</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- NOTIFICATIONS -->
+      <div id="section-notifications" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">&#128276; Notifications Center</div><div class="section-subtitle">Platform alerts and broadcast messaging</div></div></div>
+        <div class="grid-2" style="align-items:start">
+          <div>
+            <div class="card" style="margin-bottom:20px">
+              <div class="card-header"><div><div class="card-title">Pending Actions</div><div class="card-subtitle" id="notifCountLabel">Loading...</div></div></div>
+              <div id="notificationsList"><div class="skeleton" style="height:60px;margin:16px 22px 8px"></div><div class="skeleton" style="height:60px;margin:0 22px 16px"></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div><div class="card-title">&#128227; Send Broadcast</div><div class="card-subtitle">Notify specific user groups</div></div></div>
+            <div class="card-body">
+              <div class="broadcast-form">
+                <div class="form-group">
+                  <div class="form-label">Audience</div>
+                  <div class="br-radio-group">
+                    <div class="br-radio"><input type="radio" name="audience" id="aud-all" value="all" checked><label for="aud-all">All Users</label></div>
+                    <div class="br-radio"><input type="radio" name="audience" id="aud-citizens" value="citizen"><label for="aud-citizens">Citizens</label></div>
+                    <div class="br-radio"><input type="radio" name="audience" id="aud-univ" value="university_rep"><label for="aud-univ">Universities</label></div>
+                    <div class="br-radio"><input type="radio" name="audience" id="aud-ind" value="industry_rep"><label for="aud-ind">Industry</label></div>
+                  </div>
+                </div>
+                <div class="form-group"><label class="form-label" for="broadcastTitle">Title</label><input type="text" class="form-control" id="broadcastTitle" placeholder="Notification title..."></div>
+                <div class="form-group"><label class="form-label" for="broadcastMsg">Message</label><textarea class="broadcast-ta" id="broadcastMsg" placeholder="Type your broadcast message here..."></textarea></div>
+                <button onclick="sendBroadcast()" class="btn btn-primary" style="width:100%">&#10148; Send Notification</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ACTIVITY LOG -->
+      <div id="section-activity" class="dashboard-section">
+        <div class="section-header"><div><div class="section-title">Activity / Audit Log</div><div class="section-subtitle">All platform events, admin decisions, and system actions</div></div></div>
+        <div class="card">
+          <div id="activityLogList"><div class="skeleton" style="height:60px;margin:16px 22px 8px"></div><div class="skeleton" style="height:60px;margin:0 22px 8px"></div><div class="skeleton" style="height:60px;margin:0 22px 16px"></div></div>
+        </div>
+      </div>
     </div>
-    <div class="modal-body" id="caBody">Loading...</div>
+  </div>
+</div>
+<!-- CHALLENGE DETAIL MODAL -->
+<div class="modal-overlay" id="challengeActionModal">
+  <div class="modal modal-lg">
+    <div class="modal-header"><div><div class="modal-title" id="caTitle">Challenge Details</div><div class="modal-subtitle" id="caSubtitle"></div></div><button class="modal-close" onclick="closeModal('challengeActionModal')">&#10005;</button></div>
+    <div class="modal-body" id="caBody"><div style="text-align:center;padding:40px"><div class="spinner" style="margin:0 auto"></div></div></div>
     <div class="modal-footer" id="caFooter"></div>
   </div>
 </div>
-
-<!-- Assign University Modal -->
+<!-- AI ASSIGN MODAL -->
 <div class="modal-overlay" id="assignModal">
-  <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <div class="modal-title">Assign to University</div>
-      <button class="modal-close" onclick="closeModal('assignModal')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label class="form-label">Select University<span class="required">*</span></label>
-        <select class="form-control" id="assignUnivSelect">
-          <option value="">-- Choose University --</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Deadline</label>
-        <input type="date" class="form-control" id="assignDeadline">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Assignment Notes</label>
-        <textarea class="form-control" id="assignNotes" rows="3" placeholder="Any special instructions..."></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button onclick="closeModal('assignModal')" class="btn btn-ghost">Cancel</button>
-      <button onclick="confirmAssign()" class="btn btn-blue" id="assignConfirmBtn">Assign</button>
-    </div>
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title">&#129302; AI-Assisted Assignment</div><div class="modal-subtitle" id="assignModalSubtitle">AI recommends the best match</div></div><button class="modal-close" onclick="closeModal('assignModal')">&#10005;</button></div>
+    <div class="modal-body" id="assignModalBody"><div style="text-align:center;padding:30px"><div class="spinner" style="margin:0 auto"></div></div></div>
+    <div class="modal-footer" id="assignModalFooter"><button onclick="closeModal('assignModal')" class="btn btn-ghost">Cancel</button></div>
   </div>
 </div>
-
-<div id="toast-container"></div>
+<!-- ASSIGN INDUSTRY MODAL -->
+<div class="modal-overlay" id="assignIndustryModal">
+  <div class="modal modal-sm">
+    <div class="modal-header"><div><div class="modal-title">&#127970; Assign Industry Partner</div></div><button class="modal-close" onclick="closeModal('assignIndustryModal')">&#10005;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Select Industry Partner *</label><select class="form-control" id="assignIndSelect"><option value="">-- Choose Partner --</option></select></div>
+      <div class="form-group"><label class="form-label">Role</label><select class="form-control" id="assignIndRole"><option value="funder">Funder</option><option value="mentor">Mentor</option><option value="co_developer">Co-Developer</option><option value="pilot_partner">Pilot Partner</option></select></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" id="assignIndNotes" rows="3" placeholder="Any special instructions..."></textarea></div>
+    </div>
+    <div class="modal-footer"><button onclick="closeModal('assignIndustryModal')" class="btn btn-ghost">Cancel</button><button onclick="confirmAssignIndustry()" class="btn btn-primary" id="assignIndConfirmBtn">Assign</button></div>
+  </div>
+</div>
+<div id="adminToast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:white;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,0.3);align-items:center;gap:8px;pointer-events:none;border:1px solid rgba(255,255,255,0.15)"></div>
 <script src="/js/utils.js"></script>
-<script src="/js/dashboard/admin.js"></script>
+<script src="/admin/admin.js"></script>
 </body>
 </html>
