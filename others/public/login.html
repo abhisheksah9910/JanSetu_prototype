@@ -8,6 +8,29 @@
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/auth.css">
   <link rel="stylesheet" href="/css/components.css">
+  <script>
+    (function () {
+      function redirectIfAuth() {
+        var token = localStorage.getItem('is_token') || localStorage.getItem('token');
+        if (token) {
+          var u = null;
+          try { u = JSON.parse(localStorage.getItem('is_user') || localStorage.getItem('user')); } catch (e) {}
+          var role = (u && u.role) ? u.role : 'citizen';
+          var routes = {
+            citizen: '/dashboard/citizen.html',
+            university_rep: '/dashboard/university.html',
+            industry_rep: '/dashboard/industry.html',
+            admin: '/dashboard/admin.html'
+          };
+          window.location.replace(routes[role] || '/dashboard/citizen.html');
+        }
+      }
+      redirectIfAuth();
+      window.addEventListener('pageshow', function () {
+        redirectIfAuth();
+      });
+    })();
+  </script>
 </head>
 <body>
 <div class="auth-layout">
@@ -88,10 +111,10 @@
 
       <form id="loginForm" novalidate>
         <div class="form-group">
-          <label class="form-label" for="email">Email Address<span class="required">*</span></label>
+          <label class="form-label" for="email">Email / Mobile / Citizen ID (e.g. C4819) / Aadhaar<span class="required">*</span></label>
           <div class="input-with-icon">
             <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            <input type="email" class="form-control" id="email" placeholder="Enter your email" autocomplete="email" required>
+            <input type="text" class="form-control" id="email" placeholder="Enter Email, Mobile, Citizen ID (e.g. C4819) or Aadhaar" autocomplete="username" required>
           </div>
           <div class="form-error" id="emailError" style="display:none"></div>
         </div>
@@ -120,6 +143,10 @@
           <span class="btn-text">Sign In</span>
           <div class="btn-spinner"></div>
         </button>
+
+        <button type="button" onclick="openOtpLoginModal()" class="btn btn-outline" style="width:100%;margin-top:10px;justify-content:center;gap:8px;font-weight:700;color:#1E40AF;border-color:#93C5FD;background:#EFF6FF;font-size:13px;">
+          📱 <span>Sign In via Mobile / Aadhaar OTP</span>
+        </button>
       </form>
 
       <!-- Quick Login Buttons -->
@@ -146,6 +173,41 @@
       <div class="auth-terms">
         By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Login via Mobile / Aadhaar OTP -->
+<div id="otpLoginModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.65);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;max-width:420px;width:92%;padding:22px;text-align:center;box-shadow:0 20px 48px rgba(0,0,0,0.25);border:1.5px solid #93C5FD;">
+    <div style="font-size:16px;font-weight:900;color:#0F172A;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <span>📱</span> <span>Mobile / Aadhaar OTP Login</span>
+    </div>
+    <p style="font-size:12px;color:#64748B;margin-bottom:14px;">Sign in securely with your registered mobile or Aadhaar number</p>
+
+    <div style="text-align:left;margin-bottom:12px;">
+      <label style="font-size:11.5px;font-weight:700;color:#334155;margin-bottom:4px;display:block;">Mobile or Aadhaar Number</label>
+      <input type="text" id="otpLoginIdentifier" placeholder="e.g. 9431100003 or 8492-3840-4819" style="width:100%;height:40px;padding:0 12px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:13px;" value="9431100003" />
+    </div>
+    
+    <div style="background:#EFF6FF;border:1.5px dashed #3B82F6;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="text-align:left;">
+        <div style="font-size:10px;font-weight:700;color:#1E40AF;text-transform:uppercase;">💡 Demo Login OTP</div>
+        <div style="font-size:18px;font-weight:900;letter-spacing:3px;color:#1E3A8A;">123456</div>
+      </div>
+      <button type="button" onclick="document.getElementById('otpLoginInput').value='123456'" style="padding:4px 10px;font-size:11px;font-weight:700;background:#1E40AF;color:#FFF;border:none;border-radius:6px;cursor:pointer;">
+        ⚡ Auto-Fill
+      </button>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11.5px;font-weight:700;color:#334155;margin-bottom:4px;display:block;text-align:left;">Enter 6-Digit OTP</label>
+      <input type="text" id="otpLoginInput" maxlength="6" style="width:100%;height:46px;font-size:22px;letter-spacing:8px;text-align:center;font-weight:900;border:2px solid #CBD5E1;border-radius:10px;color:#002D62;background:#F8FAFC;" placeholder="123456" />
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeOtpLoginModal()" style="padding:8px 16px;">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="submitOtpLogin()" style="padding:8px 20px;font-weight:700;">✓ Verify &amp; Sign In</button>
     </div>
   </div>
 </div>

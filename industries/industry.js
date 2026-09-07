@@ -254,6 +254,6 @@ document.querySelectorAll('.modal-overlay').forEach(o => o.addEventListener('cli
 window.logout = () => {
   Confirm.show({
     title: 'Logout', message: 'Are you sure you want to logout?', confirmText: 'Logout', type: 'warning',
-    onConfirm: () => { Auth.clearAuth(); window.location.href = '/login.html'; }
+    onConfirm: () => { Auth.clearAuth(); window.location.replace('/login.html'); }
   });
 };

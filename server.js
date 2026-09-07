@@ -72,22 +72,30 @@ app.use('/industry', express.static(path.join(__dirname, 'industries')));
 app.use('/others', express.static(path.join(__dirname, 'others/public')));
 app.use(express.static(path.join(__dirname, 'others/public')));
 
+// No-cache helper for dashboard views to prevent back-button history leaks
+const sendDashboard = (filePath) => (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+  res.sendFile(path.join(__dirname, filePath));
+};
+
 // Clean Modular Routes & Navigation
-app.get('/citizen', (req, res) => res.sendFile(path.join(__dirname, 'citizen/citizen.html')));
-app.get('/citizen/citizen.html', (req, res) => res.sendFile(path.join(__dirname, 'citizen/citizen.html')));
-app.get('/university', (req, res) => res.sendFile(path.join(__dirname, 'university/university.html')));
-app.get('/university/university.html', (req, res) => res.sendFile(path.join(__dirname, 'university/university.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin/admin.html')));
-app.get('/admin/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin/admin.html')));
-app.get('/industries', (req, res) => res.sendFile(path.join(__dirname, 'industries/industry.html')));
-app.get('/industries/industry.html', (req, res) => res.sendFile(path.join(__dirname, 'industries/industry.html')));
-app.get('/industry', (req, res) => res.sendFile(path.join(__dirname, 'industries/industry.html')));
+app.get('/citizen', sendDashboard('citizen/citizen.html'));
+app.get('/citizen/citizen.html', sendDashboard('citizen/citizen.html'));
+app.get('/university', sendDashboard('university/university.html'));
+app.get('/university/university.html', sendDashboard('university/university.html'));
+app.get('/admin', sendDashboard('admin/admin.html'));
+app.get('/admin/admin.html', sendDashboard('admin/admin.html'));
+app.get('/industries', sendDashboard('industries/industry.html'));
+app.get('/industries/industry.html', sendDashboard('industries/industry.html'));
+app.get('/industry', sendDashboard('industries/industry.html'));
 
 // Backward-compatible dashboard paths
-app.get('/dashboard/citizen.html', (req, res) => res.sendFile(path.join(__dirname, 'citizen/citizen.html')));
-app.get('/dashboard/university.html', (req, res) => res.sendFile(path.join(__dirname, 'university/university.html')));
-app.get('/dashboard/admin.html', (req, res) => res.sendFile(path.join(__dirname, 'admin/admin.html')));
-app.get('/dashboard/industry.html', (req, res) => res.sendFile(path.join(__dirname, 'industries/industry.html')));
+app.get('/dashboard/citizen.html', sendDashboard('citizen/citizen.html'));
+app.get('/dashboard/university.html', sendDashboard('university/university.html'));
+app.get('/dashboard/admin.html', sendDashboard('admin/admin.html'));
+app.get('/dashboard/industry.html', sendDashboard('industries/industry.html'));
 
 // Mount API Routes
 app.use('/api/auth', require('./others/routes/auth'));

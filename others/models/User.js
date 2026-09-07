@@ -32,6 +32,29 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  citizenId: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true
+  },
+  aadhaar: {
+    type: String,
+    trim: true,
+    default: '8492-3840-4819'
+  },
+  aadhaarVerified: {
+    type: Boolean,
+    default: true
+  },
+  phoneVerified: {
+    type: Boolean,
+    default: true
+  },
+  emailVerified: {
+    type: Boolean,
+    default: true
+  },
   avatar: {
     type: String,
     default: null

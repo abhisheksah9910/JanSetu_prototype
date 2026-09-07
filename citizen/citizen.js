@@ -1234,7 +1234,7 @@ window.logout = () => {
     type: 'warning',
     onConfirm: () => {
       Auth.clearAuth();
-      window.location.href = '/login.html';
+      window.location.replace('/login.html');
     }
   });
 };

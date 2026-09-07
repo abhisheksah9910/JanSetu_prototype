@@ -26,6 +26,8 @@ var Auth = {
     localStorage.removeItem('token');
     localStorage.removeItem('is_user');
     localStorage.removeItem('user');
+    localStorage.removeItem('user_role');
+    try { sessionStorage.clear(); } catch(e) {}
   },
   isLoggedIn: () => !!(localStorage.getItem('is_token') || localStorage.getItem('token')),
   redirectToDashboard: (role) => {
@@ -35,11 +37,11 @@ var Auth = {
       industry_rep: '/dashboard/industry.html',
       admin: '/dashboard/admin.html'
     };
-    window.location.href = routes[role] || '/dashboard/citizen.html';
+    window.location.replace(routes[role] || '/dashboard/citizen.html');
   },
   requireAuth: () => {
     if (!Auth.isLoggedIn()) {
-      window.location.href = '/login.html';
+      window.location.replace('/login.html');
       return false;
     }
     return true;
@@ -48,7 +50,7 @@ var Auth = {
     const user = Auth.getUser();
     if (!user || !allowedRoles.includes(user.role)) {
       Toast.error('Access Denied', 'You do not have permission to view this page.');
-      setTimeout(() => window.location.href = '/login.html', 1500);
+      setTimeout(() => window.location.replace('/login.html'), 1500);
       return false;
     }
     return true;

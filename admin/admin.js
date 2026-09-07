@@ -649,6 +649,6 @@ window.logout = () => {
     message: 'Are you sure you want to logout from admin panel?',
     confirmText: 'Logout',
     type: 'warning',
-    onConfirm: () => { Auth.clearAuth(); window.location.href = '/login.html'; }
+    onConfirm: () => { Auth.clearAuth(); window.location.replace('/login.html'); }
   });
 };

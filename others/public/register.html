@@ -7,6 +7,29 @@
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/auth.css">
   <link rel="stylesheet" href="/css/components.css">
+  <script>
+    (function () {
+      function redirectIfAuth() {
+        var token = localStorage.getItem('is_token') || localStorage.getItem('token');
+        if (token) {
+          var u = null;
+          try { u = JSON.parse(localStorage.getItem('is_user') || localStorage.getItem('user')); } catch (e) {}
+          var role = (u && u.role) ? u.role : 'citizen';
+          var routes = {
+            citizen: '/dashboard/citizen.html',
+            university_rep: '/dashboard/university.html',
+            industry_rep: '/dashboard/industry.html',
+            admin: '/dashboard/admin.html'
+          };
+          window.location.replace(routes[role] || '/dashboard/citizen.html');
+        }
+      }
+      redirectIfAuth();
+      window.addEventListener('pageshow', function () {
+        redirectIfAuth();
+      });
+    })();
+  </script>
 </head>
 <body>
 <div class="auth-layout">
@@ -128,6 +151,26 @@
           <div class="form-error" id="regEmailError" style="display:none"></div>
         </div>
 
+        <div class="form-group">
+          <label class="form-label" for="regAadhaar">Aadhaar Card Number (12 Digits)<span class="required">*</span></label>
+          <div class="input-with-icon">
+            <span class="input-icon" style="font-size:14px;">🇮🇳</span>
+            <input type="text" class="form-control" id="regAadhaar" placeholder="XXXX-XXXX-XXXX" maxlength="14" required>
+          </div>
+          <div class="form-error" id="regAadhaarError" style="display:none"></div>
+        </div>
+
+        <!-- Interactive Dummy OTP Verification Block -->
+        <div id="regOtpNotice" style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin:14px 0;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:12px;font-weight:800;color:#1E40AF;">🛡️ OTP Verification Required</div>
+            <div style="font-size:11px;color:#3B82F6;" id="regOtpStatusText">Verify Mobile &amp; Aadhaar with Demo OTP: <strong>123456</strong></div>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" id="btnTriggerRegOtp" onclick="triggerRegisterOtp()" style="padding:5px 12px;font-size:11.5px;">
+            Verify via OTP
+          </button>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="regPassword">Password<span class="required">*</span></label>
@@ -216,6 +259,35 @@
           <div class="btn-spinner"></div>
         </button>
       </form>
+    </div>
+  </div>
+</div>
+
+<!-- Register OTP Modal -->
+<div id="regOtpModal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.65);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:18px;max-width:420px;width:92%;padding:22px;text-align:center;box-shadow:0 20px 48px rgba(0,0,0,0.25);border:1.5px solid #93C5FD;">
+    <div style="font-size:16px;font-weight:900;color:#0F172A;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <span>🔐</span> <span>JanSetu OTP Verification</span>
+    </div>
+    <p style="font-size:12px;color:#64748B;margin-bottom:14px;">Enter the 6-digit verification code to authenticate your Mobile &amp; Aadhaar identity</p>
+    
+    <div style="background:#EFF6FF;border:1.5px dashed #3B82F6;border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="text-align:left;">
+        <div style="font-size:10px;font-weight:700;color:#1E40AF;text-transform:uppercase;">💡 Demo Verification OTP</div>
+        <div style="font-size:18px;font-weight:900;letter-spacing:3px;color:#1E3A8A;">123456</div>
+      </div>
+      <button type="button" onclick="document.getElementById('regOtpInput').value='123456'" style="padding:4px 10px;font-size:11px;font-weight:700;background:#1E40AF;color:#FFF;border:none;border-radius:6px;cursor:pointer;">
+        ⚡ Auto-Fill
+      </button>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <input type="text" id="regOtpInput" maxlength="6" style="width:200px;height:48px;font-size:24px;letter-spacing:8px;text-align:center;font-weight:900;border:2px solid #CBD5E1;border-radius:10px;color:#002D62;background:#F8FAFC;" placeholder="123456" />
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button type="button" class="btn btn-secondary btn-sm" onclick="closeRegOtpModal()" style="padding:8px 16px;">Cancel</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="verifyRegOtp()" style="padding:8px 20px;font-weight:700;">✓ Verify &amp; Confirm</button>
     </div>
   </div>
 </div>

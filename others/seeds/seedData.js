@@ -353,16 +353,16 @@ const CHALLENGES_DATA = [
 ];
 
 const USERS_DATA = [
-  { name: 'Dr. Admin Kumar', email: 'admin@innovatesphere.in', password: 'admin123', role: 'admin', phone: '9431100001', isVerified: true, isActive: true },
-  { name: 'Amit Verma', email: 'amit@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100002', isVerified: true, isActive: true, address: { street: 'Doranda', city: 'Ranchi', district: 'Ranchi', pincode: '834002' } },
-  { name: 'Rajesh Mahto', email: 'rajesh@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100003', isVerified: true, isActive: true, address: { city: 'Dhanbad', district: 'Dhanbad', pincode: '826001' } },
-  { name: 'Sunita Oraon', email: 'sunita@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100004', isVerified: false, isActive: true, address: { village: 'Murhu', district: 'Khunti', pincode: '835210' } },
-  { name: 'Prof. Rajesh Singh', email: 'rajesh@iitjharkhand.ac.in', password: 'univ123', role: 'university_rep', phone: '9431100005', isVerified: true, isActive: true, designation: 'Professor & Research Coordinator', department: 'Environmental Engineering' },
-  { name: 'Dr. Meena Prasad', email: 'meena@nitjsr.ac.in', password: 'univ123', role: 'university_rep', phone: '9431100006', isVerified: true, isActive: true, designation: 'Associate Professor', department: 'Civil Engineering' },
-  { name: 'Vikram Sinha', email: 'tata@steel.com', password: 'industry123', role: 'industry_rep', phone: '9431100007', isVerified: true, isActive: true, designation: 'CSR Director' },
-  { name: 'Anita Gupta', email: 'anita@jharkhandstartup.in', password: 'industry123', role: 'industry_rep', phone: '9431100008', isVerified: true, isActive: true, designation: 'Program Manager' },
-  { name: 'Arun Kumar', email: 'arun@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100009', isVerified: true, isActive: true, address: { city: 'Jamshedpur', district: 'East Singhbhum' } },
-  { name: 'Kavya Sharma', email: 'kavya@gmail.com', password: 'citizen123', role: 'citizen', phone: '9431100010', isVerified: true, isActive: true, address: { city: 'Bokaro', district: 'Bokaro' } }
+  { name: 'Dr. Admin Kumar', email: 'admin@innovatesphere.in', password: 'admin123', role: 'admin', phone: '9431100001', aadhaar: '9999-8888-7777', isVerified: true, isActive: true },
+  { name: 'Amit Verma', email: 'amit@gmail.com', password: 'citizen123', role: 'citizen', citizenId: 'C1092', phone: '9431100002', aadhaar: '9182-4729-1092', isVerified: true, isActive: true, address: { street: 'Doranda', city: 'Ranchi', district: 'Ranchi', pincode: '834002' } },
+  { name: 'Rajesh Mahto', email: 'rajesh@gmail.com', password: 'citizen123', role: 'citizen', citizenId: 'C4819', phone: '9431100003', aadhaar: '8492-3840-4819', isVerified: true, isActive: true, address: { city: 'Dhanbad', district: 'Dhanbad', pincode: '826001' } },
+  { name: 'Sunita Oraon', email: 'sunita@gmail.com', password: 'citizen123', role: 'citizen', citizenId: 'C3918', phone: '9431100004', aadhaar: '7391-4920-3918', isVerified: false, isActive: true, address: { village: 'Murhu', district: 'Khunti', pincode: '835210' } },
+  { name: 'Prof. Rajesh Singh', email: 'rajesh@iitjharkhand.ac.in', password: 'univ123', role: 'university_rep', phone: '9431100005', aadhaar: '6281-9301-8392', isVerified: true, isActive: true, designation: 'Professor & Research Coordinator', department: 'Environmental Engineering' },
+  { name: 'Dr. Meena Prasad', email: 'meena@nitjsr.ac.in', password: 'univ123', role: 'university_rep', phone: '9431100006', aadhaar: '5192-8401-7392', isVerified: true, isActive: true, designation: 'Associate Professor', department: 'Civil Engineering' },
+  { name: 'Vikram Sinha', email: 'tata@steel.com', password: 'industry123', role: 'industry_rep', phone: '9431100007', aadhaar: '4091-8291-6281', isVerified: true, isActive: true, designation: 'CSR Director' },
+  { name: 'Anita Gupta', email: 'anita@jharkhandstartup.in', password: 'industry123', role: 'industry_rep', phone: '9431100008', aadhaar: '3981-7291-5192', isVerified: true, isActive: true, designation: 'Program Manager' },
+  { name: 'Arun Kumar', email: 'arun@gmail.com', password: 'citizen123', role: 'citizen', citizenId: 'C4081', phone: '9431100009', aadhaar: '2871-6182-4081', isVerified: true, isActive: true, address: { city: 'Jamshedpur', district: 'East Singhbhum' } },
+  { name: 'Kavya Sharma', email: 'kavya@gmail.com', password: 'citizen123', role: 'citizen', citizenId: 'C3972', phone: '9431100010', aadhaar: '1762-5071-3972', isVerified: true, isActive: true, address: { city: 'Bokaro', district: 'Bokaro' } }
 ];
 
 async function seedDatabase() {

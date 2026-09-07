@@ -1,10 +1,10 @@
 // auth.js — Login, Register, Forgot Password logic
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Redirect if already logged in
-  if (Auth.isLoggedIn() && !window.location.pathname.includes('register')) {
+  // Redirect if already logged in (login, register, forgot-password)
+  if (Auth.isLoggedIn()) {
     const user = Auth.getUser();
-    if (user) Auth.redirectToDashboard(user.role);
+    Auth.redirectToDashboard(user ? user.role : 'citizen');
     return;
   }
 
@@ -35,7 +35,7 @@ function initLogin() {
     clearErrors();
 
     let valid = true;
-    if (!email || !/\S+@\S+\.\S+/.test(email)) { showError('emailError', 'Please enter a valid email address'); valid = false; }
+    if (!email || email.length < 3) { showError('emailError', 'Please enter your email, mobile, or citizen ID (e.g. C4819)'); valid = false; }
     if (!password) { showError('passwordError', 'Password is required'); valid = false; }
     if (!valid) return;
 
@@ -59,6 +59,66 @@ window.quickLogin = async (email, password) => {
   document.getElementById('email').value = email;
   document.getElementById('password').value = password;
   document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+};
+
+window.openOtpLoginModal = () => {
+  const modal = document.getElementById('otpLoginModal');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.closeOtpLoginModal = () => {
+  const modal = document.getElementById('otpLoginModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.submitOtpLogin = async () => {
+  const identifier = (document.getElementById('otpLoginIdentifier')?.value || '').trim();
+  const otp = (document.getElementById('otpLoginInput')?.value || '').trim();
+
+  if (!identifier) {
+    alert('Please enter your Mobile or Aadhaar number');
+    return;
+  }
+  if (otp !== '123456') {
+    alert('Invalid OTP. Please enter demo code 123456');
+    return;
+  }
+
+  // Quick sign in as Citizen (Rajesh Mahto)
+  closeOtpLoginModal();
+  quickLogin('rajesh@gmail.com', 'citizen123');
+};
+
+let isRegOtpVerified = false;
+
+window.triggerRegisterOtp = () => {
+  const modal = document.getElementById('regOtpModal');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.closeRegOtpModal = () => {
+  const modal = document.getElementById('regOtpModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.verifyRegOtp = () => {
+  const otp = (document.getElementById('regOtpInput')?.value || '').trim();
+  if (otp !== '123456') {
+    alert('Invalid OTP. Please enter demo code 123456');
+    return;
+  }
+  isRegOtpVerified = true;
+  closeRegOtpModal();
+  const statusEl = document.getElementById('regOtpStatusText');
+  if (statusEl) statusEl.innerHTML = '<span style="color:#059669;font-weight:800;">✓ Mobile &amp; Aadhaar Verified Successfully!</span>';
+  const triggerBtn = document.getElementById('btnTriggerRegOtp');
+  if (triggerBtn) {
+    triggerBtn.textContent = '✓ Verified';
+    triggerBtn.style.background = '#059669';
+    triggerBtn.style.borderColor = '#059669';
+    triggerBtn.disabled = true;
+  }
+  Toast.success('Identity Verified!', 'Mobile and Aadhaar authenticated via OTP 123456');
 };
 
 // ── Register ──
@@ -91,15 +151,25 @@ function initRegister() {
     const password = document.getElementById('regPassword').value;
     const confirmPassword = document.getElementById('regConfirmPassword').value;
     const phone = document.getElementById('regPhone').value.trim();
+    const aadhaar = document.getElementById('regAadhaar')?.value.trim() || '8492-3840-4819';
 
     let valid = true;
     if (!name || name.length < 2) { showError('nameError', 'Please enter your full name'); valid = false; }
     if (!email || !/\S+@\S+\.\S+/.test(email)) { showError('regEmailError', 'Please enter a valid email'); valid = false; }
     if (!password || password.length < 6) { showError('regPasswordError', 'Password must be at least 6 characters'); valid = false; }
     if (password !== confirmPassword) { showError('confirmPasswordError', 'Passwords do not match'); valid = false; }
+    if (role === 'citizen' && (!aadhaar || aadhaar.length < 12)) {
+      showError('regAadhaarError', 'Please enter a valid 12-digit Aadhaar number');
+      valid = false;
+    }
     if (!valid) return;
 
-    const data = { name, email, password, role, phone };
+    if (role === 'citizen' && !isRegOtpVerified) {
+      triggerRegisterOtp();
+      return;
+    }
+
+    const data = { name, email, password, role, phone, aadhaar };
 
     if (role === 'university_rep') {
       data.universityId = document.getElementById('universitySelect')?.value;
@@ -123,8 +193,9 @@ function initRegister() {
       const res = await API.post('/auth/register', data);
       if (res.success) {
         Auth.setAuth(res.token, res.user);
-        Toast.success('Account created!', 'Welcome to InnovateSphere!');
-        setTimeout(() => Auth.redirectToDashboard(res.user.role), 1000);
+        const cidMsg = res.user.citizenId ? ` Your Citizen ID is: ${res.user.citizenId}.` : '';
+        Toast.success('Account created!' + cidMsg, 'Welcome to JanSetu!');
+        setTimeout(() => Auth.redirectToDashboard(res.user.role), 1200);
       }
     } catch (error) {
       showAlert('registerAlert', 'error', error.message || 'Registration failed. Please try again.');

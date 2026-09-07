@@ -8,6 +8,23 @@
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/css/components.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Immediate Auth Guard & BF-Cache Protection -->
+  <script>
+    (function () {
+      function checkAdminAuth() {
+        var token = localStorage.getItem('is_token') || localStorage.getItem('token');
+        if (!token) {
+          window.location.replace('/login.html');
+          return false;
+        }
+        return true;
+      }
+      checkAdminAuth();
+      window.addEventListener('pageshow', function () {
+        checkAdminAuth();
+      });
+    })();
+  </script>
 </head>
 <body>
 <div class="dashboard-layout">
